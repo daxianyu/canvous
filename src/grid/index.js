@@ -48,8 +48,9 @@ export default class CanvasGrid {
     pointList.forEach(points => {
       const { color, rate = 1, point, borderColor } = points;
       invariant(color, 'color must required');
-      invariant(Array.isArray(point), 'point must be array');
       const {bottomLeft, topRight} = point;
+      invariant(bottomLeft, 'point must have prop bottomLeft');
+      invariant(topRight, 'point must have prop topRight');
       const { x, y: y0 } = bottomLeft;
       const { x: x0, y } = topRight;
       const width = Math.abs(x0 - x);
