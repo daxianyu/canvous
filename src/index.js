@@ -1,3 +1,5 @@
-import demo from './demo';
+import CanvasGrid from './grid';
 
-export default demo;
+export {
+  CanvasGrid
+}
