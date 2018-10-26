@@ -23,12 +23,11 @@ export default class Grid {
     } else {
       /* Call canvas api to draw grid. */
       ctx.fillStyle = color;
+      ctx.fillRect(x, y, width, height);
       if (lineColor) {
-        ctx.clearRect(x, y, width, height);
         ctx.strokeStyle = lineColor;
         ctx.strokeRect(x, y, width, height);
       }
-      ctx.fillRect(x, y, width, height);
       if (useCache) {
         /* Save image in cache. */
         imageCache[cacheKey] = ctx.getImageData(x, y, width, height);
@@ -48,7 +47,7 @@ export default class Grid {
    * @param {number}   grids[].bounds.topRight.y - Grid top right point vertical coordinate value.
    * @param {string}   grids[].borderColor - Grid outline colour.
    * @param {string}   grids[].color - Grid background colour.
-   * 
+   *
    * grid format:
    * 1. bounds: {bottomLeft: {x, y}, topRight: {x, y}}.
    * 2. borderColor: outline colour.
@@ -77,7 +76,7 @@ export default class Grid {
       /* Decimal point would raise performance and platform consistency issues on canvas. */
       const width = Math.round(x1 - x0);
       const height = Math.round(y1 - y0);
-      this.renderer(x, y, width, height, color, borderColor);
+      this.renderer(x0, y0, width, height, color, borderColor);
     });
   }
 }
