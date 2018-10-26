@@ -1,6 +1,6 @@
 const invariant = require('invariant');
 
-/* class for render grid with or without border */
+/* Class for render grid with or without border. */
 export default class Grid {
   constructor(ctx, useCache = true) {
     this.imageCache = {};
@@ -34,12 +34,23 @@ export default class Grid {
   }
 
   /**
-   * render grid of squares
-   * points format:
-   * 1. point: [{x, y}, {x, y}] leftBottom vs rightTop
-   * 2. color: bg color
+   * Render many grids.
+   * @param {object[]} grids - Represents a list of grids.
+   * @param {object}   grids[].bounds - Grid boundary.
+   * @param {object}   grids[].bounds.bottomLeft - Grid bottom left point in the coordinate system.
+   * @param {number}   grids[].bounds.bottomLeft.x - Grid bottom left point horizontal coordinate value.
+   * @param {number}   grids[].bounds.bottomLeft.y - Grid bottom left point vertical coordinate value.
+   * @param {object}   grids[].bounds.topRight - Grid top right point in the coordinate system.
+   * @param {number}   grids[].bounds.topRight.x - Grid top right point horizontal coordinate value.
+   * @param {number}   grids[].bounds.topRight.y - Grid top right point vertical coordinate value.
+   * @param {string}   grids[].borderColor - Grid outline colour.
+   * @param {string}   grids[].color - Grid background colour.
+   * 
+   * grids format:
+   * 1. bounds: {bottomLeft: {x, y}, topRight: {x, y}}
+   * 2. color: background colour
    * 3. rate: rect width percentage
-   * 4. borderColor: outline color
+   * 4. borderColor: outline colour
    * */
   groupRender(pointList, useCache) {
     if (arguments.length > 1) {
