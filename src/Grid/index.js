@@ -8,12 +8,12 @@ export default class Grid {
     this.useCache = useCache;
   }
 
-  /**
-   * render single square
-   * */
+  /* Render single square. */
   renderer(x, y, width, height, color, lineColor) {
     const { ctx, imageCache, useCache } = this;
+    /* Skip if any one of width or height is 0. */
     if (!width) return;
+    if (!height) return;
     if (imageCache[color + width] && useCache) {
       const cache = imageCache[color + width];
       ctx.putImageData(cache, x, y);
