@@ -14,10 +14,14 @@ export default class Grid {
     /* Skip if any one of width or height is 0. */
     if (!width) return;
     if (!height) return;
-    if (imageCache[color + width] && useCache) {
-      const cache = imageCache[color + width];
+    /* Grids have the same width, height, color and lineColor will be reused. */
+    const cacheKey = `${width},${height},${color},${lineColor},`;
+    if (imageCache.hasOwnProperty(cacheKey) && useCache) {
+      /* Use cached image. */
+      const cache = imageCache[cacheKey];
       ctx.putImageData(cache, x, y);
     } else {
+      /* Call canvas api to draw grid. */
       ctx.fillStyle = color;
       if (lineColor) {
         ctx.clearRect(x, y, width, height);
@@ -26,8 +30,8 @@ export default class Grid {
       }
       ctx.fillRect(x, y, width, height);
       if (useCache) {
-        // save image fragment
-        imageCache[color + width] = ctx.getImageData(x, y, width, height);
+        /* Save image in cache. */
+        imageCache[cacheKey] = ctx.getImageData(x, y, width, height);
       }
     }
   }
