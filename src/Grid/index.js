@@ -52,16 +52,17 @@ export default class Grid {
    * 3. rate: rect width percentage
    * 4. borderColor: outline colour
    * */
-  groupRender(pointList, useCache) {
+  groupRender(grids, useCache) {
     if (arguments.length > 1) {
       this.useCache = useCache;
     }
-    pointList.forEach(points => {
-      const { color, rate = 1, point, borderColor } = points;
-      invariant(color, 'color must required');
-      const {bottomLeft, topRight} = point;
-      invariant(bottomLeft, 'point must have prop bottomLeft');
-      invariant(topRight, 'point must have prop topRight');
+    /* Iterate to draw every single grid. */
+    grids.forEach((grid) => {
+      const { bounds = {}, borderColor, color, rate = 1 } = grid;
+      const { bottomLeft, topRight } = bounds;
+      invariant(color, 'color is required');
+      invariant(bottomLeft, 'bounds must have prop bottomLeft');
+      invariant(topRight, 'bounds must have prop topRight');
       const { x, y: y0 } = bottomLeft;
       const { x: x0, y } = topRight;
       const width = Math.abs(x0 - x);
