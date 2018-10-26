@@ -11,9 +11,8 @@ export default class Grid {
   /**
    * render single square
    * */
-  renderer(x, y, width, height, color, lineColor, rate) {
+  renderer(x, y, width, height, color, lineColor) {
     const { ctx, imageCache, useCache } = this;
-    width = Math.ceil(width * rate);
     if (!width) return;
     if (imageCache[color + width] && useCache) {
       const cache = imageCache[color + width];
@@ -46,11 +45,10 @@ export default class Grid {
    * @param {string}   grids[].borderColor - Grid outline colour.
    * @param {string}   grids[].color - Grid background colour.
    * 
-   * grids format:
-   * 1. bounds: {bottomLeft: {x, y}, topRight: {x, y}}
-   * 2. color: background colour
-   * 3. rate: rect width percentage
-   * 4. borderColor: outline colour
+   * grid format:
+   * 1. bounds: {bottomLeft: {x, y}, topRight: {x, y}}.
+   * 2. borderColor: outline colour.
+   * 3. color: background colour.
    * */
   groupRender(grids, useCache) {
     if (arguments.length > 1) {
@@ -62,21 +60,20 @@ export default class Grid {
         bounds = {},
         borderColor = 'black',
         color = 'black',
-        rate = 1,
       } = grid;
       const { bottomLeft, topRight } = bounds;
       invariant(bottomLeft, 'bounds must have prop bottomLeft');
       invariant(topRight, 'bounds must have prop topRight');
       /**
        * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
-       * BottomLeft and topRight bound points coordinates
+       * BottomLeft and topRight bound points coordinates.
        */
       const { x: x0, y: y1 } = bottomLeft;
       const { x: x1, y: y0 } = topRight;
       /* Decimal point would raise performance and platform consistency issues on canvas. */
       const width = Math.round(x1 - x0);
       const height = Math.round(y1 - y0);
-      this.renderer(x, y, width * rate, height, color, borderColor, rate);
+      this.renderer(x, y, width, height, color, borderColor);
     });
   }
 }
