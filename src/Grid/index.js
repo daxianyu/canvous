@@ -73,8 +73,9 @@ export default class Grid {
        */
       const { x: x0, y: y1 } = bottomLeft;
       const { x: x1, y: y0 } = topRight;
-      const width = Math.abs(x1 - x0);
-      const height = Math.abs(y1 - y0);
+      /* Decimal point would raise performance and platform consistency issues on canvas. */
+      const width = Math.round(x1 - x0);
+      const height = Math.round(y1 - y0);
       this.renderer(x, y, width * rate, height, color, borderColor, rate);
     });
   }
