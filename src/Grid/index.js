@@ -67,10 +67,14 @@ export default class Grid {
       const { bottomLeft, topRight } = bounds;
       invariant(bottomLeft, 'bounds must have prop bottomLeft');
       invariant(topRight, 'bounds must have prop topRight');
-      const { x, y: y0 } = bottomLeft;
-      const { x: x0, y } = topRight;
-      const width = Math.abs(x0 - x);
-      const height = Math.abs(y - y0);
+      /**
+       * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
+       * BottomLeft and topRight bound points coordinates
+       */
+      const { x: x0, y: y1 } = bottomLeft;
+      const { x: x1, y: y0 } = topRight;
+      const width = Math.abs(x1 - x0);
+      const height = Math.abs(y1 - y0);
       this.renderer(x, y, width * rate, height, color, borderColor, rate);
     });
   }
