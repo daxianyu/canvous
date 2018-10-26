@@ -2,7 +2,7 @@
   "name": "canvas-2d",
   "version": "1.0.0",
   "description": "Draw basic graph in canvas",
-  "main": "src/index.js",
+  "main": "build/index.js",
   "scripts": {
     "prebuild": "rimraf build demo/node_modules/js-component-seed",
     "dev:copy-files": "cross-env NODE_ENV=development babel-node ./script/copy-files.js",
