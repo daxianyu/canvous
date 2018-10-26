@@ -1,7 +1,7 @@
 const invariant = require('invariant');
 
 /* class for render grid with or without border */
-export default class CanvasGrid {
+export default class Grid {
   constructor(ctx, useCache = true) {
     this.imageCache = {};
     this.ctx = ctx;

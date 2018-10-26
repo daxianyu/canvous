@@ -1,6 +1,7 @@
-import CanvasGrid from './grid';
+import Grid from './grid';
 import Points from './points'
 
 export {
-  CanvasGrid, Points
+  Grid,
+  Points,
 }
