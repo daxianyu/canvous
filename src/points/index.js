@@ -2,7 +2,7 @@ const invariant = require('invariant');
 const { kdTree } = require('./kdTree')
 const MAXSIZE = 30000
 /**
- * draw mass points without blockƒ
+ * draw mass points without block
  * */
 export default class Points {
 
@@ -18,13 +18,14 @@ export default class Points {
 
     this.processedDataList = this.generateBinaryData(dataList)
     this.drawer = drawer
+    this.start()
   }
-
-  /** indicate the index of points data array */
-  cursor = 0
 
   /** start or stop render */
   pause = false
+
+  /** indicate the index of points data array */
+  cursor = 0
 
   /** save data in kdTree format */
   processedDataList = []
@@ -93,6 +94,9 @@ export default class Points {
 
   /** generate kdTree data and rearrange to binaryHeap */
   generateBinaryData (dataList) {
+    if(!dataList.length) {
+      return []
+    }
     const kdData = new kdTree(dataList, function (a, b) {
       return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)
     }, ['x', 'y'])
