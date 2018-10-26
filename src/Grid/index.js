@@ -58,9 +58,13 @@ export default class Grid {
     }
     /* Iterate to draw every single grid. */
     grids.forEach((grid) => {
-      const { bounds = {}, borderColor, color, rate = 1 } = grid;
+      const {
+        bounds = {},
+        borderColor = 'black',
+        color = 'black',
+        rate = 1,
+      } = grid;
       const { bottomLeft, topRight } = bounds;
-      invariant(color, 'color is required');
       invariant(bottomLeft, 'bounds must have prop bottomLeft');
       invariant(topRight, 'bounds must have prop topRight');
       const { x, y: y0 } = bottomLeft;
