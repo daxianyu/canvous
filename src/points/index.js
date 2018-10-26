@@ -1,12 +1,23 @@
 const invariant = require('invariant');
 const { kdTree } = require('./kdTree')
 const MAXSIZE = 30000
+
+const FAST = 512
+const DEFAULT = 256
+const SMOOTH = 128
+
+const SPEED = {
+  fast: 'FAST',
+  default: 'DEFAULT',
+  smooth: 'SMOOTH'
+}
+
 /**
  * draw mass points without block
  * */
 export default class Points {
 
-  constructor(dataList, drawer) {
+  constructor(dataList, drawer, speed = 'default') {
     invariant(
       Array.isArray(dataList),
       'DataList should be array'
@@ -16,6 +27,7 @@ export default class Points {
       'Parameter drawer should be function'
     )
 
+    this.speed = SPEED[speed] || DEFAULT
     this.processedDataList = this.generateBinaryData(dataList)
     this.drawer = drawer
     this.start()
@@ -35,7 +47,7 @@ export default class Points {
     // if pause, stop and quit
     if(this.pause) return;
 
-    const { processedDataList, cursor } = this
+    const { processedDataList, cursor, speed } = this
     const endIndexOut = processedDataList.length
     // if outer length is 0, empty
     if(endIndexOut === 0) return
@@ -47,7 +59,7 @@ export default class Points {
     if(cursor > endIndex) return
 
     const timeLeft = deadLine.timeRemaining()
-    const count = Math.floor(timeLeft) * 256
+    const count = Math.floor(timeLeft) * speed
     let current = cursor
 
     while(current < endIndex && current < cursor + count) {
