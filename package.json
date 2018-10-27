@@ -1,6 +1,6 @@
 {
   "name": "canvas-mass",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha.1",
   "description": "Draw basic graph in canvas",
   "main": "build/index.js",
   "scripts": {

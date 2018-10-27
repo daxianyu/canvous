@@ -15,7 +15,7 @@ const SPEED = {
 /**
  * draw mass points without block
  * */
-export default class Points {
+export default class MassMarks {
 
   constructor(dataList, drawer, {
     speed = 'default',
