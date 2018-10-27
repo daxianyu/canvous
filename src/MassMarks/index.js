@@ -93,6 +93,8 @@ export default class MassMarks {
     const count = Math.floor(timeLeft) * speed
     let current = cursor
 
+    // record cost time and drawn points
+    let start = Date.now(), increment, cost;
     while(current < endIndex && current < cursor + count) {
       if(layer > -1 && !glancingDataList) {
         if (current > ((1 << layer) - 1)) break;
@@ -103,9 +105,15 @@ export default class MassMarks {
       this.drawer && this.drawer(point)
       current += 1
     }
+    cost = Date.now() - start;
+    increment = current - this.cursor
+    // avoid 0 cause err
+    if(increment > 0) {
+      const averageDrawSpeed = cost / increment;
+      this.speed = Math.ceil(this.speed + averageDrawSpeed * (timeLeft - cost))
+    }
     this.cursor = current
     // do drawing
-
     this.loopStack()
   }
 
