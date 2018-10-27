@@ -1,6 +1,9 @@
 const invariant = require('invariant');
-const { kdTree } = require('kd-tree-javascript')
-const MAXSIZE = 30000
+const { kdTree: KdTree } = require('kd-tree-javascript')
+const MAXSIZE = 30000;
+
+// 13 layers
+const MAX_NEAREST_COUNT = (1 << 12) - 1;
 
 const FAST = 512
 const DEFAULT = 256
@@ -49,6 +52,11 @@ export default class MassMarks {
     this.start()
   }
 
+  kdTree = null
+
+  /** saving Glancing array */
+  glancingDataList = null
+
   /** max layers of drawing points tree, -1 for no limit */
   layer = -1
 
@@ -65,13 +73,17 @@ export default class MassMarks {
   drawRouteInRequestIdle = (deadLine) => {
     // if pause, stop and quit
     if(this.pause) return;
-
-    const { processedDataList, cursor, speed, layer } = this
-    const endIndexOut = processedDataList.length
+    const { processedDataList, glancingDataList, cursor, speed, layer } = this
+    // if glancingDataList exist, render it first
+    let dataList = processedDataList
+    if(glancingDataList) {
+      dataList = glancingDataList
+    }
+    const endIndexOut = dataList.length
     // if outer length is 0, empty
     if(endIndexOut === 0) return
     // last array length
-    const endIndexLast = processedDataList[endIndexOut - 1].length
+    const endIndexLast = dataList[endIndexOut - 1].length
     // total count
     const endIndex = (endIndexOut - 1) * MAXSIZE + endIndexLast
 
@@ -87,7 +99,7 @@ export default class MassMarks {
       }
       const currentOut = Math.floor(current / MAXSIZE)
       const tailIndex = current - currentOut * MAXSIZE
-      const point = processedDataList[currentOut][tailIndex]
+      const point = dataList[currentOut][tailIndex]
       this.drawer && this.drawer(point)
       current += 1
     }
@@ -98,7 +110,7 @@ export default class MassMarks {
   }
 
   /** start or stop loop */
-  start = (fn) => {
+  start(fn) {
     if(fn) {
       this.drawer = fn
     }
@@ -110,16 +122,42 @@ export default class MassMarks {
     this.layer = layer || -1
   }
 
-  stop = () => {
+  stop() {
     this.pause = true
   }
 
-  restart = (fn) => {
+  restart(fn) {
     this.cursor = 0;
+    this.glancingDataList = null;
     if(this.pause) {
       this.pause = false
       this.loopStack()
     }
+  }
+
+  /** lookup nearest point to draw */
+  lookUp(center, distance) {
+    if (this.kdTree) {
+      console.time('find')
+      const nearest = this.kdTree.nearest(center, MAX_NEAREST_COUNT, distance)
+      console.timeEnd('find')
+      console.time('rea')
+      this.glancingDataList  = [nearest.map(point => {
+        return point[0]
+      })];
+      console.timeEnd('rea')
+    }
+    this.cursor = 0;
+    if(this.pause) {
+      this.pause = false;
+      this.loopStack()
+    }
+  }
+
+  /** stop glancing */
+  stopLookUp() {
+    this.glancingDataList = null
+    this.restart()
   }
 
   /** loop */
@@ -138,18 +176,11 @@ export default class MassMarks {
     return [newDataListArray]
   }
 
-  /** generate kdTree data and rearrange to binaryHeap */
-  generateBinaryData (dataList) {
-    if(!dataList.length) {
-      return []
-    }
-    const kdData = new kdTree(dataList, function (a, b) {
-      return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)
-    }, ['x', 'y'])
-    let firstStack = [kdData.root]
+  /** travel tree to generate array */
+  static travelKdTree(kdTree) {
+    let firstStack = [kdTree.root]
     let currentStack = firstStack
     const stack = [firstStack]
-
     // 2-d array
     let newDataListArray = []
     const listArraySet = [newDataListArray]
@@ -179,5 +210,18 @@ export default class MassMarks {
       }
     }
     return listArraySet
+  }
+
+
+  /** generate kdTree data and rearrange to binaryHeap */
+  generateBinaryData(dataList) {
+    if(!dataList.length) {
+      return []
+    }
+    const kdTree = new KdTree(dataList, function (a, b) {
+      return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)
+    }, ['x', 'y'])
+    this.kdTree = kdTree
+    return MassMarks.travelKdTree(kdTree);
   }
 }
