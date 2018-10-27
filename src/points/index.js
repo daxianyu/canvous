@@ -7,9 +7,9 @@ const DEFAULT = 256
 const SMOOTH = 128
 
 const SPEED = {
-  fast: 'FAST',
-  default: 'DEFAULT',
-  smooth: 'SMOOTH'
+  FAST,
+  DEFAULT,
+  SMOOTH
 }
 
 /**
@@ -17,7 +17,10 @@ const SPEED = {
  * */
 export default class Points {
 
-  constructor(dataList, drawer, speed = 'default') {
+  constructor(dataList, drawer, {
+    speed = 'default',
+    useKd = true
+  }) {
     invariant(
       Array.isArray(dataList),
       'DataList should be array'
@@ -26,9 +29,20 @@ export default class Points {
       typeof drawer === "function",
       'Parameter drawer should be function'
     )
-
-    this.speed = SPEED[speed] || DEFAULT
-    this.processedDataList = this.generateBinaryData(dataList)
+    this.speed = DEFAULT
+    if(speed !== undefined) {
+      if(typeof speed === 'string') {
+        this.speed = SPEED[speed.toUpperCase()] || DEFAULT
+      }
+      if(typeof speed === 'number') {
+        this.speed = speed
+      }
+    }
+    if(useKd) {
+      this.processedDataList = this.generateBinaryData(dataList)
+    } else {
+      this.processedDataList = [dataList]
+    }
     this.drawer = drawer
     this.start()
   }
@@ -66,10 +80,7 @@ export default class Points {
       const currentOut = Math.floor(current / MAXSIZE)
       const tailIndex = current - currentOut * MAXSIZE
       const point = processedDataList[currentOut][tailIndex]
-      this.drawer && this.drawer({
-        x: point[0],
-        y: point[1]
-      })
+      this.drawer && this.drawer(point)
       current += 1
     }
     this.cursor = current
@@ -139,9 +150,7 @@ export default class Points {
         newDataListArray = []
         listArraySet.push(newDataListArray)
       }
-      // save as array
-      const {x, y} = node.obj
-      newDataListArray.push([x, y])
+      newDataListArray.push(node.obj)
       if(node.right) {
         currentStack.push(node.right)
       }
