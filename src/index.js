@@ -1,7 +1,7 @@
 import Grid from './Grid';
-import Points from './points'
+import MassMarks from './MassMarks'
 
 export {
   Grid,
-  Points,
+  MassMarks,
 }
