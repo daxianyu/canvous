@@ -94,7 +94,7 @@ export default class MassMarks {
     let current = cursor
 
     while(current < endIndex && current < cursor + count) {
-      if(layer > -1) {
+      if(layer > -1 && !glancingDataList) {
         if (current > ((1 << layer) - 1)) break;
       }
       const currentOut = Math.floor(current / MAXSIZE)
@@ -120,6 +120,7 @@ export default class MassMarks {
 
   setLayer = (layer) => {
     this.layer = layer || -1
+    this.restart()
   }
 
   stop() {
@@ -128,26 +129,29 @@ export default class MassMarks {
 
   restart(fn) {
     this.cursor = 0;
-    this.glancingDataList = null;
     if(this.pause) {
       this.pause = false
       this.loopStack()
     }
   }
 
+  restartMain(fn) {
+    this.glancingDataList = null;
+    if(fn) {
+      this.drawer = fn
+    }
+    this.restart()
+  }
+
   /** lookup nearest point to draw */
-  lookUp(center, distance) {
+  lookUp(center, distance, count = MAX_NEAREST_COUNT) {
     if (this.kdTree) {
-      const nearest = this.kdTree.nearest(center, MAX_NEAREST_COUNT, distance)
+      const nearest = this.kdTree.nearest(center, count, distance)
       this.glancingDataList  = [nearest.map(point => {
         return point[0]
       })];
     }
-    this.cursor = 0;
-    if(this.pause) {
-      this.pause = false;
-      this.loopStack()
-    }
+    this.restart()
   }
 
   /** stop glancing */
