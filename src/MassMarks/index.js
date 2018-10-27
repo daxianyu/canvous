@@ -138,14 +138,10 @@ export default class MassMarks {
   /** lookup nearest point to draw */
   lookUp(center, distance) {
     if (this.kdTree) {
-      console.time('find')
       const nearest = this.kdTree.nearest(center, MAX_NEAREST_COUNT, distance)
-      console.timeEnd('find')
-      console.time('rea')
       this.glancingDataList  = [nearest.map(point => {
         return point[0]
       })];
-      console.timeEnd('rea')
     }
     this.cursor = 0;
     if(this.pause) {
