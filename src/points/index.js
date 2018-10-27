@@ -1,5 +1,5 @@
 const invariant = require('invariant');
-const { kdTree } = require('./kdTree')
+const { kdTree } = require('kd-tree-javascript')
 const MAXSIZE = 30000
 
 const FAST = 512
@@ -19,7 +19,8 @@ export default class Points {
 
   constructor(dataList, drawer, {
     speed = 'default',
-    useKd = true
+    useKd = false,
+    layer = -1
   }) {
     invariant(
       Array.isArray(dataList),
@@ -41,11 +42,15 @@ export default class Points {
     if(useKd) {
       this.processedDataList = this.generateBinaryData(dataList)
     } else {
-      this.processedDataList = [dataList]
+      this.processedDataList = this.generateNormalData(dataList)
     }
+    this.layer = layer
     this.drawer = drawer
     this.start()
   }
+
+  /** max layers of drawing points tree, -1 for no limit */
+  layer = -1
 
   /** start or stop render */
   pause = false
@@ -61,7 +66,7 @@ export default class Points {
     // if pause, stop and quit
     if(this.pause) return;
 
-    const { processedDataList, cursor, speed } = this
+    const { processedDataList, cursor, speed, layer } = this
     const endIndexOut = processedDataList.length
     // if outer length is 0, empty
     if(endIndexOut === 0) return
@@ -77,6 +82,9 @@ export default class Points {
     let current = cursor
 
     while(current < endIndex && current < cursor + count) {
+      if(layer > -1) {
+        if (current > ((1 << layer) - 1)) break;
+      }
       const currentOut = Math.floor(current / MAXSIZE)
       const tailIndex = current - currentOut * MAXSIZE
       const point = processedDataList[currentOut][tailIndex]
@@ -98,6 +106,10 @@ export default class Points {
     this.loopStack()
   }
 
+  setLayer = (layer) => {
+    this.layer = layer || -1
+  }
+
   stop = () => {
     this.pause = true
   }
@@ -113,6 +125,17 @@ export default class Points {
   /** loop */
   loopStack () {
     window.requestIdleCallback(this.drawRouteInRequestIdle)
+  }
+
+  /** random data arrange */
+  generateNormalData (dataList) {
+    if(!dataList.length) {
+      return []
+    }
+    // 2-d array
+    let newDataListArray = dataList.slice()
+    newDataListArray.sort(() => (Math.random() - 0.5))
+    return [newDataListArray]
   }
 
   /** generate kdTree data and rearrange to binaryHeap */
