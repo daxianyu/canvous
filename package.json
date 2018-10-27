@@ -1,5 +1,5 @@
 {
-  "name": "canvas-2d",
+  "name": "canvas-mass",
   "version": "1.0.0-alpha",
   "description": "Draw basic graph in canvas",
   "main": "build/index.js",
