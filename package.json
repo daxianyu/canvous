@@ -46,5 +46,8 @@
     "roots": [
       "<rootDir>/src/"
     ]
+  },
+  "dependencies": {
+    "kd-tree-javascript": "^1.0.3"
   }
 }
