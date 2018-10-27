@@ -1,6 +1,6 @@
 {
   "name": "canvas-2d",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha",
   "description": "Draw basic graph in canvas",
   "main": "build/index.js",
   "scripts": {
@@ -21,8 +21,8 @@
     "preversion": "yarn test",
     "version": "yarn build && npm publish build"
   },
-  "repository": "git@github.com:marcosun/js-component-seed.git",
-  "author": "marcosun <marcoinbristol@gmail.com>",
+  "repository": "git@github.com:daxianyu/canvas-2d.git",
+  "author": "daxianyu <daxianyu@outlook.com>",
   "license": "MIT",
   "devDependencies": {
     "babel-cli": "^6.26.0",
