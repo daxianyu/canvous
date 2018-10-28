@@ -21,7 +21,7 @@ const SPEED = {
 export default class MassMarks {
 
   constructor(dataList, drawer, {
-    speed = 'default',
+    speed,
     useKd = false,
     layer = -1
   }) {
@@ -34,14 +34,8 @@ export default class MassMarks {
       'Parameter drawer should be function'
     )
     this.$$speed = DEFAULT
-    if(speed !== undefined) {
-      if(typeof speed === 'string') {
-        this.$$speed = SPEED[speed.toUpperCase()] || DEFAULT
-      }
-      if(typeof speed === 'number') {
-        this.$$speed = speed
-      }
-    }
+    this.setSpeed(speed)
+
     if(useKd) {
       this.$$processedDataList = this.$$generateBinaryData(dataList)
     } else {
@@ -71,7 +65,7 @@ export default class MassMarks {
 
   /** drawing */
   $$drawRouteInRequestIdle = (deadLine) => {
-    const { $$processedDataList, $$glancingDataList, $$cursor, $$speed, $$layer } = this
+    const { $$processedDataList, $$glancingDataList, $$cursor, $$speed, $$layer, $$isAutoSpeed } = this
     // if glancingDataList exist, render it first
     let dataList = $$processedDataList
     if($$glancingDataList) {
@@ -103,12 +97,14 @@ export default class MassMarks {
       this.$$drawer && this.$$drawer(point)
       current += 1
     }
-    cost = Date.now() - start;
-    increment = current - this.$$cursor
-    // avoid 0 cause err
-    if(increment > 0) {
-      const averageDrawSpeed = cost / increment;
-      this.$$speed = Math.ceil(this.$$speed + averageDrawSpeed * (timeLeft - cost))
+    if($$isAutoSpeed) {
+      cost = Date.now() - start;
+      increment = current - this.$$cursor
+      // avoid 0 cause err
+      if(increment > 0) {
+        const averageDrawSpeed = cost / increment;
+        this.$$speed = Math.ceil(this.$$speed + averageDrawSpeed * (timeLeft - cost))
+      }
     }
     this.$$cursor = current
     // do drawing
@@ -123,11 +119,6 @@ export default class MassMarks {
     this.$$loopStack()
   }
 
-  setLayer = (layer) => {
-    this.$$layer = layer || -1
-    this.restart()
-  }
-
   stop() {
     window.cancelIdleCallback(this.$$idleHandler)
     this.$$idleHandler = undefined
@@ -135,17 +126,35 @@ export default class MassMarks {
 
   restart(fn) {
     this.$$cursor = 0;
-    if(!this.$$idleHandler) {
-      this.$$loopStack()
-    }
+    this.stop()
+    this.start(fn)
   }
 
   restartMain(fn) {
     this.$$glancingDataList = null;
-    if(fn) {
-      this.$$drawer = fn
-    }
+    this.restart(fn)
+  }
+
+  /** change max layer */
+  setLayer = (layer) => {
+    this.$$layer = layer || -1
     this.restart()
+  }
+
+  /** reset speed */
+  setSpeed(speed) {
+    this.$$isAutoSpeed = (speed === undefined)
+    if(speed !== undefined) {
+      if(typeof speed === 'string') {
+        this.$$speed = SPEED[speed.toUpperCase()] || DEFAULT
+      }
+      if(typeof speed === 'number') {
+        this.$$speed = speed
+      }
+    } else {
+      // auto init speed
+      this.$$speed = DEFAULT
+    }
   }
 
   /** lookup nearest point to draw */
