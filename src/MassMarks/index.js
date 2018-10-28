@@ -111,22 +111,25 @@ export default class MassMarks {
     this.$$loopStack()
   }
 
+  /** stop < start < restart < restartMain */
   /** start or stop loop */
   start(fn) {
     if(fn) {
       this.$$drawer = fn
     }
+    this.stop()
     this.$$loopStack()
   }
 
   stop() {
-    window.cancelIdleCallback(this.$$idleHandler)
-    this.$$idleHandler = undefined
+    if(this.$$idleHandler) {
+      window.cancelIdleCallback(this.$$idleHandler)
+      this.$$idleHandler = undefined
+    }
   }
 
   restart(fn) {
     this.$$cursor = 0;
-    this.stop()
     this.start(fn)
   }
 
