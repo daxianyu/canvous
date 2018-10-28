@@ -66,6 +66,7 @@ export default class MassMarks {
   /** drawing */
   $$drawRouteInRequestIdle = (deadLine) => {
     const { $$processedDataList, $$glancingDataList, $$cursor, $$speed, $$layer, $$isAutoSpeed } = this
+    let shouldStopDraw = false
     // if glancingDataList exist, render it first
     let dataList = $$processedDataList
     if($$glancingDataList) {
@@ -88,14 +89,21 @@ export default class MassMarks {
     // record cost time and drawn points
     let start = Date.now(), increment, cost;
     while(current < endIndex && current < $$cursor + count) {
+      // layer restrict and not is small scale
       if($$layer > -1 && !$$glancingDataList) {
-        if (current > ((1 << $$layer) - 1)) break;
+        if (current > ((1 << $$layer) - 1)) {
+          shouldStopDraw = true;
+          break;
+        }
       }
       const currentOut = Math.floor(current / MAXSIZE)
       const tailIndex = current - currentOut * MAXSIZE
       const point = dataList[currentOut][tailIndex]
       this.$$drawer && this.$$drawer(point)
       current += 1
+    }
+    if (current === endIndex) {
+      shouldStopDraw = true
     }
     if($$isAutoSpeed) {
       cost = Date.now() - start;
@@ -107,6 +115,8 @@ export default class MassMarks {
       }
     }
     this.$$cursor = current
+    // stop loop when finished
+    if(shouldStopDraw) return;
     // do drawing
     this.$$loopStack()
   }
