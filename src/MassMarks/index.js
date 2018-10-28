@@ -33,51 +33,49 @@ export default class MassMarks {
       typeof drawer === "function",
       'Parameter drawer should be function'
     )
-    this.speed = DEFAULT
+    this.$$speed = DEFAULT
     if(speed !== undefined) {
       if(typeof speed === 'string') {
-        this.speed = SPEED[speed.toUpperCase()] || DEFAULT
+        this.$$speed = SPEED[speed.toUpperCase()] || DEFAULT
       }
       if(typeof speed === 'number') {
-        this.speed = speed
+        this.$$speed = speed
       }
     }
     if(useKd) {
-      this.processedDataList = this.generateBinaryData(dataList)
+      this.$$processedDataList = this.$$generateBinaryData(dataList)
     } else {
-      this.processedDataList = this.generateNormalData(dataList)
+      this.$$processedDataList = this.$$generateNormalData(dataList)
     }
-    this.layer = layer
-    this.drawer = drawer
+    this.$$layer = layer
+    this.$$drawer = drawer
     this.start()
   }
 
-  kdTree = null
+  $$kdTree = null
 
   /** saving Glancing array */
-  glancingDataList = null
+  $$glancingDataList = null
 
   /** max layers of drawing points tree, -1 for no limit */
-  layer = -1
+  $$layer = -1
 
-  /** start or stop render */
-  pause = false
+  /** Idle callback handler */
+  $$idleHandler = undefined
 
   /** indicate the index of points data array */
-  cursor = 0
+  $$cursor = 0
 
   /** save data in kdTree format */
-  processedDataList = []
+  $$processedDataList = []
 
   /** drawing */
-  drawRouteInRequestIdle = (deadLine) => {
-    // if pause, stop and quit
-    if(this.pause) return;
-    const { processedDataList, glancingDataList, cursor, speed, layer } = this
+  $$drawRouteInRequestIdle = (deadLine) => {
+    const { $$processedDataList, $$glancingDataList, $$cursor, $$speed, $$layer } = this
     // if glancingDataList exist, render it first
-    let dataList = processedDataList
-    if(glancingDataList) {
-      dataList = glancingDataList
+    let dataList = $$processedDataList
+    if($$glancingDataList) {
+      dataList = $$glancingDataList
     }
     const endIndexOut = dataList.length
     // if outer length is 0, empty
@@ -87,75 +85,74 @@ export default class MassMarks {
     // total count
     const endIndex = (endIndexOut - 1) * MAXSIZE + endIndexLast
 
-    if(cursor > endIndex) return
+    if($$cursor > endIndex) return
 
     const timeLeft = deadLine.timeRemaining()
-    const count = Math.floor(timeLeft) * speed
-    let current = cursor
+    const count = Math.floor(timeLeft) * $$speed
+    let current = $$cursor
 
     // record cost time and drawn points
     let start = Date.now(), increment, cost;
-    while(current < endIndex && current < cursor + count) {
-      if(layer > -1 && !glancingDataList) {
-        if (current > ((1 << layer) - 1)) break;
+    while(current < endIndex && current < $$cursor + count) {
+      if($$layer > -1 && !$$glancingDataList) {
+        if (current > ((1 << $$layer) - 1)) break;
       }
       const currentOut = Math.floor(current / MAXSIZE)
       const tailIndex = current - currentOut * MAXSIZE
       const point = dataList[currentOut][tailIndex]
-      this.drawer && this.drawer(point)
+      this.$$drawer && this.$$drawer(point)
       current += 1
     }
     cost = Date.now() - start;
-    increment = current - this.cursor
+    increment = current - this.$$cursor
     // avoid 0 cause err
     if(increment > 0) {
       const averageDrawSpeed = cost / increment;
-      this.speed = Math.ceil(this.speed + averageDrawSpeed * (timeLeft - cost))
+      this.$$speed = Math.ceil(this.$$speed + averageDrawSpeed * (timeLeft - cost))
     }
-    this.cursor = current
+    this.$$cursor = current
     // do drawing
-    this.loopStack()
+    this.$$loopStack()
   }
 
   /** start or stop loop */
   start(fn) {
     if(fn) {
-      this.drawer = fn
+      this.$$drawer = fn
     }
-    this.pause = false
-    this.loopStack()
+    this.$$loopStack()
   }
 
   setLayer = (layer) => {
-    this.layer = layer || -1
+    this.$$layer = layer || -1
     this.restart()
   }
 
   stop() {
-    this.pause = true
+    window.cancelIdleCallback(this.$$idleHandler)
+    this.$$idleHandler = undefined
   }
 
   restart(fn) {
-    this.cursor = 0;
-    if(this.pause) {
-      this.pause = false
-      this.loopStack()
+    this.$$cursor = 0;
+    if(!this.$$idleHandler) {
+      this.$$loopStack()
     }
   }
 
   restartMain(fn) {
-    this.glancingDataList = null;
+    this.$$glancingDataList = null;
     if(fn) {
-      this.drawer = fn
+      this.$$drawer = fn
     }
     this.restart()
   }
 
   /** lookup nearest point to draw */
   lookUp(center, distance, count = MAX_NEAREST_COUNT) {
-    if (this.kdTree) {
-      const nearest = this.kdTree.nearest(center, count, distance)
-      this.glancingDataList  = [nearest.map(point => {
+    if (this.$$kdTree) {
+      const nearest = this.$$kdTree.nearest(center, count, distance)
+      this.$$glancingDataList  = [nearest.map(point => {
         return point[0]
       })];
     }
@@ -164,17 +161,17 @@ export default class MassMarks {
 
   /** stop glancing */
   stopLookUp() {
-    this.glancingDataList = null
+    this.$$glancingDataList = null
     this.restart()
   }
 
   /** loop */
-  loopStack () {
-    window.requestIdleCallback(this.drawRouteInRequestIdle)
+  $$loopStack = () => {
+    this.$$idleHandler = window.requestIdleCallback(this.$$drawRouteInRequestIdle)
   }
 
   /** random data arrange */
-  generateNormalData (dataList) {
+  $$generateNormalData (dataList) {
     if(!dataList.length) {
       return []
     }
@@ -222,14 +219,14 @@ export default class MassMarks {
 
 
   /** generate kdTree data and rearrange to binaryHeap */
-  generateBinaryData(dataList) {
+  $$generateBinaryData(dataList) {
     if(!dataList.length) {
       return []
     }
     const kdTree = new KdTree(dataList, function (a, b) {
       return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)
     }, ['x', 'y'])
-    this.kdTree = kdTree
+    this.$$kdTree = kdTree
     return MassMarks.travelKdTree(kdTree);
   }
 }
