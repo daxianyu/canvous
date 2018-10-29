@@ -173,12 +173,20 @@ export default class MassMarks {
   /** lookup nearest point to draw */
   lookUp(center, distance, count = MAX_NEAREST_COUNT) {
     if (this.$$kdTree) {
-      const nearest = this.$$kdTree.nearest(center, count, distance)
+      const nearest = this.getNearest(center, distance, count)
       this.$$glancingDataList  = [nearest.map(point => {
         return point[0]
       })];
     }
     this.restart()
+  }
+
+  getNearest(center, distance, count = MAX_NEAREST_COUNT) {
+    invariant(
+      this.$$kdTree,
+      'Only support when useKd is True'
+    )
+    return this.$$kdTree.nearest(center, count, distance)
   }
 
   /** stop glancing */
@@ -238,7 +246,6 @@ export default class MassMarks {
     }
     return listArraySet
   }
-
 
   /** generate kdTree data and rearrange to binaryHeap */
   $$generateBinaryData(dataList) {
