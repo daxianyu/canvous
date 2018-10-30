@@ -23,7 +23,9 @@ export default class MassMarks {
   constructor(dataList, drawer, {
     speed,
     useKd = false,
-    layer = -1
+    layer = -1,
+    distance,
+    dimension
   }) {
     invariant(
       Array.isArray(dataList),
@@ -35,14 +37,18 @@ export default class MassMarks {
     )
     this.$$speed = DEFAULT
     this.setSpeed(speed)
+    this.$$layer = layer
+    this.$$drawer = drawer
+    this.$$distance = distance || function (a, b) {
+      return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)
+    }
+    this.$$dimetions = dimension || ['x', 'y']
 
     if(useKd) {
       this.$$processedDataList = this.$$generateBinaryData(dataList)
     } else {
       this.$$processedDataList = this.$$generateNormalData(dataList)
     }
-    this.$$layer = layer
-    this.$$drawer = drawer
     this.start()
   }
 
@@ -252,9 +258,7 @@ export default class MassMarks {
     if(!dataList.length) {
       return []
     }
-    const kdTree = new KdTree(dataList, function (a, b) {
-      return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)
-    }, ['x', 'y'])
+    const kdTree = new KdTree(dataList, this.$$distance, this.$$dimetions)
     this.$$kdTree = kdTree
     return MassMarks.travelKdTree(kdTree);
   }
