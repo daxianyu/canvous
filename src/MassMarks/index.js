@@ -96,7 +96,7 @@ export default class MassMarks {
     let start = Date.now(), increment, cost;
     while(current < endIndex && current < $$cursor + count) {
       // layer restrict and not is small scale
-      if($$layer > -1 && !$$glancingDataList) {
+      if($$layer > -1) {
         if (current > ((1 << $$layer) - 1)) {
           shouldStopDraw = true;
           break;
