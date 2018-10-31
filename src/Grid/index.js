@@ -9,13 +9,13 @@ export default class Grid {
   }
 
   /* Render single square. */
-  renderer(x, y, width, height, color, lineColor) {
+  renderer(x, y, width, height, color, borderColor) {
     const { ctx, imageCache, useCache } = this;
     /* Skip if any one of width or height is 0. */
     if (!width || !height) return;
-    /* Grids have the same width, height, color and lineColor will be reused. */
-    const cacheKey = `${width},${height},${color},${lineColor},`;
-    if (imageCache.hasOwnProperty(cacheKey) && useCache) {
+    /* Grids have the same width, height, color and borderColor will be reused. */
+    const cacheKey = `${width},${height},${color},${borderColor},`;
+    if (useCache && imageCache.hasOwnProperty(cacheKey)) {
       /* Use cached image. */
       const cache = imageCache[cacheKey];
       ctx.putImageData(cache, x, y);
@@ -23,8 +23,9 @@ export default class Grid {
       /* Call canvas api to draw grid. */
       ctx.fillStyle = color;
       ctx.fillRect(x, y, width, height);
-      if (lineColor) {
-        ctx.strokeStyle = lineColor;
+      /* Draw border if border colour is defined. */
+      if (borderColor) {
+        ctx.strokeStyle = borderColor;
         ctx.strokeRect(x, y, width, height);
       }
       if (useCache) {
