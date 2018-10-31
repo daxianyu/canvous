@@ -45,7 +45,7 @@ export default class Grid {
    * @param {object}   grids[].bounds.topRight - Grid top right point in the coordinate system.
    * @param {number}   grids[].bounds.topRight.x - Grid top right point horizontal coordinate value.
    * @param {number}   grids[].bounds.topRight.y - Grid top right point vertical coordinate value.
-   * @param {string}   [grids[].borderColor=transparent] - Grid outline colour.
+   * @param {string}   [grids[].borderColor] - Grid outline colour.
    * @param {string}   [grids[].color=black] - Grid background colour.
    *
    * grid format:
@@ -61,7 +61,7 @@ export default class Grid {
     grids.forEach((grid) => {
       const {
         bounds = {},
-        borderColor = 'transparent',
+        borderColor,
         color = 'black',
       } = grid;
       const { bottomLeft, topRight } = bounds;
