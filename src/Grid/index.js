@@ -1,6 +1,6 @@
 const invariant = require('invariant');
 
-/* Class for render grid with or without border. */
+/* Class to render grid with or without border. */
 export default class Grid {
   constructor(ctx, useCache = true) {
     this.imageCache = {};
@@ -12,8 +12,7 @@ export default class Grid {
   renderer(x, y, width, height, color, lineColor) {
     const { ctx, imageCache, useCache } = this;
     /* Skip if any one of width or height is 0. */
-    if (!width) return;
-    if (!height) return;
+    if (!width || !height) return;
     /* Grids have the same width, height, color and lineColor will be reused. */
     const cacheKey = `${width},${height},${color},${lineColor},`;
     if (imageCache.hasOwnProperty(cacheKey) && useCache) {
