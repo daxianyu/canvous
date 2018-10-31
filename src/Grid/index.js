@@ -53,10 +53,7 @@ export default class Grid {
    * 2. borderColor: outline colour.
    * 3. color: background colour.
    * */
-  groupRender(grids, useCache) {
-    if (arguments.length > 1) {
-      this.useCache = useCache;
-    }
+  groupRender(grids) {
     /* Iterate to draw every single grid. */
     grids.forEach((grid) => {
       const {
