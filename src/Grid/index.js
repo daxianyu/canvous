@@ -17,26 +17,50 @@ export default class Grid {
     this.offscreenCtx = this.offscreenGrid.getContext('2d');
   }
 
-  /* Draw a single grid on a canvas. The size of the grid should match exactly the size of the canvas. */
-  drawOffscreenGrid(width, height, color, borderColor) {
-    const canvas = this.offscreenGrid;
-    const ctx = this.offscreenCtx;
-    /* Clear canvas and adjust the size appropriate to the grid. */
-    canvas.width = width,
-    canvas.height = height,
-    /* Call canvas api to draw grid. */
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, width, height);
-    /* Draw border if border colour is defined. */
-    if (borderColor) {
-      ctx.strokeStyle = borderColor;
-      ctx.strokeRect(0, 0, width, height);
-    }
-    return ctx.getImageData(0, 0, width, height);
+  /**
+   * Render many grids. Calling this function draws grids.
+   * @param {object[]} grids - Represents a list of grids.
+   * @param {object}   grids[].bounds - Grid boundary.
+   * @param {object}   grids[].bounds.bottomLeft - Grid bottom left point in the coordinate system.
+   * @param {number}   grids[].bounds.bottomLeft.x - Grid bottom left point horizontal coordinate value.
+   * @param {number}   grids[].bounds.bottomLeft.y - Grid bottom left point vertical coordinate value.
+   * @param {object}   grids[].bounds.topRight - Grid top right point in the coordinate system.
+   * @param {number}   grids[].bounds.topRight.x - Grid top right point horizontal coordinate value.
+   * @param {number}   grids[].bounds.topRight.y - Grid top right point vertical coordinate value.
+   * @param {string}   [grids[].borderColor] - Grid outline colour.
+   * @param {string}   [grids[].color=black] - Grid background colour.
+   *
+   * grid format:
+   * 1. bounds: {bottomLeft: {x, y}, topRight: {x, y}}.
+   * 2. borderColor: outline colour.
+   * 3. color: background colour.
+   * */
+  render = (grids) => {
+    /* Iterate to draw every single grid. */
+    grids.forEach((grid) => {
+      const {
+        bounds = {},
+        borderColor,
+        color = 'black',
+      } = grid;
+      const { bottomLeft, topRight } = bounds;
+      invariant(bottomLeft, 'bounds must have prop bottomLeft');
+      invariant(topRight, 'bounds must have prop topRight');
+      /**
+       * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
+       * BottomLeft and topRight bound points coordinates.
+       */
+      const { x: x0, y: y1 } = bottomLeft;
+      const { x: x1, y: y0 } = topRight;
+      /* Decimal point would raise performance and platform consistency issues on canvas. */
+      const width = Math.round(x1 - x0);
+      const height = Math.round(y1 - y0);
+      this.drawGridOnScreen(x0, y0, width, height, color, borderColor);
+    });
   }
 
-  /* Render single square. */
-  renderer(x, y, width, height, color, borderColor) {
+  /* Draw a single grid. */
+  drawGridOnScreen(x, y, width, height, color, borderColor) {
     const { ctx, imageCache, useCache } = this;
     /* Skip if any one of width or height is 0. */
     if (!width || !height) return;
@@ -61,44 +85,23 @@ export default class Grid {
   }
 
   /**
-   * Render many grids.
-   * @param {object[]} grids - Represents a list of grids.
-   * @param {object}   grids[].bounds - Grid boundary.
-   * @param {object}   grids[].bounds.bottomLeft - Grid bottom left point in the coordinate system.
-   * @param {number}   grids[].bounds.bottomLeft.x - Grid bottom left point horizontal coordinate value.
-   * @param {number}   grids[].bounds.bottomLeft.y - Grid bottom left point vertical coordinate value.
-   * @param {object}   grids[].bounds.topRight - Grid top right point in the coordinate system.
-   * @param {number}   grids[].bounds.topRight.x - Grid top right point horizontal coordinate value.
-   * @param {number}   grids[].bounds.topRight.y - Grid top right point vertical coordinate value.
-   * @param {string}   [grids[].borderColor] - Grid outline colour.
-   * @param {string}   [grids[].color=black] - Grid background colour.
-   *
-   * grid format:
-   * 1. bounds: {bottomLeft: {x, y}, topRight: {x, y}}.
-   * 2. borderColor: outline colour.
-   * 3. color: background colour.
-   * */
-  groupRender(grids) {
-    /* Iterate to draw every single grid. */
-    grids.forEach((grid) => {
-      const {
-        bounds = {},
-        borderColor,
-        color = 'black',
-      } = grid;
-      const { bottomLeft, topRight } = bounds;
-      invariant(bottomLeft, 'bounds must have prop bottomLeft');
-      invariant(topRight, 'bounds must have prop topRight');
-      /**
-       * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
-       * BottomLeft and topRight bound points coordinates.
-       */
-      const { x: x0, y: y1 } = bottomLeft;
-      const { x: x1, y: y0 } = topRight;
-      /* Decimal point would raise performance and platform consistency issues on canvas. */
-      const width = Math.round(x1 - x0);
-      const height = Math.round(y1 - y0);
-      this.renderer(x0, y0, width, height, color, borderColor);
-    });
+   * Draw a single grid on an offscreen canvas.
+   * The size of the grid should match exactly the size of the canvas.
+   */
+  drawOffscreenGrid(width, height, color, borderColor) {
+    const canvas = this.offscreenGrid;
+    const ctx = this.offscreenCtx;
+    /* Clear canvas and adjust the size appropriate to the grid. */
+    canvas.width = width,
+    canvas.height = height,
+    /* Call canvas api to draw grid. */
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, width, height);
+    /* Draw border if border colour is defined. */
+    if (borderColor) {
+      ctx.strokeStyle = borderColor;
+      ctx.strokeRect(0, 0, width, height);
+    }
+    return ctx.getImageData(0, 0, width, height);
   }
 }
