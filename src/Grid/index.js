@@ -6,6 +6,33 @@ export default class Grid {
     this.imageCache = {};
     this.ctx = ctx;
     this.useCache = useCache;
+    /**
+     * Every grid will be drawn on offscreen canvas first, then cached if required,
+     * and finally copied to the screen canvas.
+     * In this way, we could cache the entire grid image even though this grid is not
+     * visible on screen. In the circumstance that this cached grid could be reused later,
+     * it shows the grid image instead of a blank image.
+     */
+    this.offscreenGrid = window.document.createElement('canvas');
+    this.offscreenCtx = this.offscreenGrid.getContext('2d');
+  }
+
+  /* Draw a single grid on a canvas. The size of the grid should match exactly the size of the canvas. */
+  drawOffscreenGrid(width, height, color, borderColor) {
+    const canvas = this.offscreenGrid;
+    const ctx = this.offscreenCtx;
+    /* Clear canvas and adjust the size appropriate to the grid. */
+    canvas.width = width,
+    canvas.height = height,
+    /* Call canvas api to draw grid. */
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, width, height);
+    /* Draw border if border colour is defined. */
+    if (borderColor) {
+      ctx.strokeStyle = borderColor;
+      ctx.strokeRect(0, 0, width, height);
+    }
+    return ctx.getImageData(0, 0, width, height);
   }
 
   /* Render single square. */
@@ -20,17 +47,15 @@ export default class Grid {
       const cache = imageCache[cacheKey];
       ctx.putImageData(cache, x, y);
     } else {
-      /* Call canvas api to draw grid. */
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, width, height);
-      /* Draw border if border colour is defined. */
-      if (borderColor) {
-        ctx.strokeStyle = borderColor;
-        ctx.strokeRect(x, y, width, height);
-      }
+      /**
+       * Draw offscreenGrid so that a full grid image will be created even though
+       * it isn't visible on screen.
+       */
+      const gridImage = this.drawOffscreenGrid(width, height, color, borderColor);
+      ctx.putImageData(gridImage, x, y);
       if (useCache) {
         /* Save image in cache. */
-        imageCache[cacheKey] = ctx.getImageData(x, y, width, height);
+        imageCache[cacheKey] = gridImage;
       }
     }
   }
