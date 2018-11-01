@@ -70,7 +70,7 @@ export default class MassMarks {
     /**
      * start draw points
      * */
-    this.start();
+    this.render();
   }
 
   $$kdTree = null;
@@ -149,7 +149,7 @@ export default class MassMarks {
     this.$$loopStack();
   };
 
-  /** stop < start < restart */
+  /** pause < continue < render */
   /** start or stop loop */
   pause() {
     if (this.$$idleHandler) {
@@ -162,13 +162,13 @@ export default class MassMarks {
     if (fn) {
       this.$$drawer = fn;
     }
-    this.stop();
+    this.pause();
     this.$$loopStack();
   }
 
   render(fn) {
     this.$$cursor = 0;
-    this.start(fn);
+    this.continue(fn);
   }
 
   /** Reset speed */
@@ -223,7 +223,7 @@ export default class MassMarks {
       );
       this.$$drawer = drawer;
     }
-    this.restart();
+    this.render();
   }
 
   /**
