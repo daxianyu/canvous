@@ -2,10 +2,12 @@ const invariant = require('invariant');
 
 /* Class to render grid with or without border. */
 export default class Grid {
-  constructor(ctx, useCache = true) {
+  constructor(ctx, options) {
+    const { data = [], useCache = true } = options
     this.imageCache = {};
     this.ctx = ctx;
-    this.useCache = useCache;
+    this.$$data = data;
+    this.$$useCache = useCache;
     /**
      * Every grid will be drawn on offscreen canvas first, then cached if required,
      * and finally copied to the screen canvas.
@@ -15,6 +17,16 @@ export default class Grid {
      */
     this.offscreenGrid = window.document.createElement('canvas');
     this.offscreenCtx = this.offscreenGrid.getContext('2d');
+  }
+
+  /**
+   * reset options
+   * @param {object} options
+   * */
+  setOptions = (options) => {
+    const { data = this.$$data, useCache = this.$$useCache } = options;
+    this.$$data = data
+    this.$$useCache = useCache;
   }
 
   /**
@@ -35,7 +47,8 @@ export default class Grid {
    * 2. borderColor: outline colour.
    * 3. color: background colour.
    * */
-  render = (grids) => {
+  render = () => {
+    const grids = this.$$data
     /* Iterate to draw every single grid. */
     grids.forEach((grid) => {
       const {
@@ -61,12 +74,12 @@ export default class Grid {
 
   /* Draw a single grid. */
   drawGridOnScreen(x, y, width, height, color, borderColor) {
-    const { ctx, imageCache, useCache } = this;
+    const { ctx, imageCache, $$useCache } = this;
     /* Skip if any one of width or height is 0. */
     if (!width || !height) return;
     /* Grids have the same width, height, color and borderColor will be reused. */
     const cacheKey = `${width},${height},${color},${borderColor},`;
-    if (useCache && imageCache.hasOwnProperty(cacheKey)) {
+    if ($$useCache && imageCache.hasOwnProperty(cacheKey)) {
       /* Use cached image. */
       const cache = imageCache[cacheKey];
       ctx.putImageData(cache, x, y);
@@ -77,7 +90,7 @@ export default class Grid {
        */
       const gridImage = this.drawOffscreenGrid(width, height, color, borderColor);
       ctx.putImageData(gridImage, x, y);
-      if (useCache) {
+      if ($$useCache) {
         /* Save image in cache. */
         imageCache[cacheKey] = gridImage;
       }
