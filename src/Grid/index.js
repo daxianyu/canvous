@@ -92,8 +92,8 @@ export default class Grid {
     const canvas = this.offscreenGrid;
     const ctx = this.offscreenCtx;
     /* Clear canvas and adjust the size appropriate to the grid. */
-    canvas.width = width,
-    canvas.height = height,
+    canvas.width = width;
+    canvas.height = height;
     /* Call canvas api to draw grid. */
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, width, height);
