@@ -151,14 +151,14 @@ export default class MassMarks {
 
   /** stop < start < restart */
   /** start or stop loop */
-  stop() {
+  pause() {
     if (this.$$idleHandler) {
       window.cancelIdleCallback(this.$$idleHandler);
       this.$$idleHandler = undefined;
     }
   }
 
-  start(fn) {
+  continue(fn) {
     if (fn) {
       this.$$drawer = fn;
     }
@@ -166,7 +166,7 @@ export default class MassMarks {
     this.$$loopStack();
   }
 
-  restart(fn) {
+  render(fn) {
     this.$$cursor = 0;
     this.start(fn);
   }
