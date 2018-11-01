@@ -194,7 +194,7 @@ export default class MassMarks {
    * */
   setOptions(options) {
     const {
-      data, layer,
+      data, layer = this.$$layer,
       drawer = this.$$drawer, speed = this.$$speed, useKd = this.$$useKd,
       radius = this.$$radius, distance = this.$$distance, dimension = this.$$dimetions,
     } = options;
