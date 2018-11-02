@@ -195,7 +195,7 @@ export default class MassMarks {
   setOptions(options) {
     const {
       data, layer = this.$$layer,
-      drawer = this.$$drawer, speed = this.$$speed, useKd = this.$$useKd,
+      drawer = this.$$drawer, speed, useKd = this.$$useKd,
       radius = this.$$radius, distance = this.$$distance, dimension = this.$$dimetions,
     } = options;
     this.$$dimetions = dimension;
@@ -203,7 +203,9 @@ export default class MassMarks {
     this.$$radius = radius;
     this.$$layer = layer;
     this.$$drawer = drawer;
-    this.setSpeed(speed);
+    if (speed !== undefined) {
+      this.setSpeed(speed);
+    }
     if (data && this.$$data !== data) {
       this.$$data = data;
       invariant(
@@ -234,10 +236,13 @@ export default class MassMarks {
    * */
   getNearest(center, distance, count = MAX_NEAREST_COUNT) {
     invariant(
-      this.$$kdTree,
+      this.$$useKd,
       'Only support when useKd is True',
     );
-    return this.$$kdTree.nearest(center, count, distance);
+    if (this.$$kdTree) {
+      return this.$$kdTree.nearest(center, count, distance);
+    }
+    return [];
   }
 
   /** Loop */
