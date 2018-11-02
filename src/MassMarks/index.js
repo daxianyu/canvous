@@ -7,9 +7,10 @@ const MAXSIZE = 30000;
 // 13 layers
 const MAX_NEAREST_COUNT = (2 ** 13) - 1;
 
-const FAST = 512;
-const DEFAULT = 256;
+/** Default small, auto increase */
+const DEFAULT = 16;
 const SMOOTH = 128;
+const FAST = 512;
 
 const SPEED = {
   FAST,
