@@ -254,7 +254,7 @@ export default class MassMarks {
     }
     const newDataListArray = dataList.slice();
     newDataListArray.sort(() => (Math.random() - 0.5));
-    return new TdArray([newDataListArray]);
+    return new TdArray(newDataListArray);
   }
 
   /** Travel tree to generate array */
