@@ -92,12 +92,17 @@ export default class MassMarks {
    * Draw point in canvas
    * */
   drawer = (point) => {
-    const { x, y } = point;
+    const { x, y, fillColor, radius: pRadius } = point;
+    const lastFillColor = this.ctx.fillStyle;
     this.ctx.beginPath();
-    const radius = point.radius || this.$$radius;
+    const radius = pRadius || point.radius || this.$$radius;
+    if (fillColor) {
+      this.ctx.fillStyle = fillColor;
+    }
     this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
     this.ctx.fill();
     this.ctx.closePath();
+    this.ctx.fillStyle = lastFillColor;
   };
 
   /** drawing */
@@ -109,15 +114,24 @@ export default class MassMarks {
     const totalLength = dataList.length;
     if ($$cursor > totalLength) return;
 
+    /** Compare time every time after drawn */
     const timeLeft = deadLine.timeRemaining();
-    const count = Math.floor(timeLeft) * $$speed;
+    const count = Math.ceil(timeLeft * $$speed);
+
     let current = $$cursor;
 
     /** Record cost time and drawn points */
     const start = Date.now();
     let increment;
-    let cost;
-    while (current < totalLength && current < $$cursor + count) {
+    let cost = 0;
+    while (current < totalLength) {
+      if (!$$isAutoSpeed) {
+        if (current < $$cursor + count) {
+          break;
+        }
+      } else if (cost * 1.5 > timeLeft) {
+        break;
+      }
       /** Layer restrict */
       if ($$layer > -1) {
         if (current > ((2 ** $$layer) - 1)) {
@@ -130,6 +144,7 @@ export default class MassMarks {
       point = this.$$pointConverter(point);
       this.$$drawer(point);
       current += 1;
+      cost = Date.now() - start;
     }
     if (current === totalLength) {
       shouldStopDraw = true;
@@ -139,9 +154,9 @@ export default class MassMarks {
       cost = Date.now() - start;
       increment = current - this.$$cursor;
       /** Avoid 0 cause err */
-      if (increment > 0) {
-        const averageDrawSpeed = cost / increment;
-        this.$$speed = Math.ceil(this.$$speed + averageDrawSpeed * (timeLeft - cost));
+      if (cost > 0) {
+        const averageDrawSpeed = increment / cost;
+        this.$$speed = Math.ceil(averageDrawSpeed);
       }
     }
     this.$$cursor = current;
@@ -247,7 +262,7 @@ export default class MassMarks {
   }
 
   /** Loop */
-  $$loopStack = () => {
+  $$loopStack() {
     this.$$idleHandler = window.requestIdleCallback(this.$$drawRouteInRequestIdle);
   }
 
