@@ -72,6 +72,9 @@ export default class MassMarks {
      * start draw points
      * */
     this.render();
+
+    this.offscreenGrid = window.document.createElement('canvas');
+    this.offscreenCtx = this.offscreenGrid.getContext('2d');
   }
 
   $$kdTree = null;
@@ -92,18 +95,66 @@ export default class MassMarks {
    * Draw point in canvas
    * */
   drawer = (point) => {
-    const { x, y, fillColor, radius: pRadius } = point;
+    const { x, y, fillColor = this.ctx.fillStyle, radius: pRadius } = point;
     const lastFillColor = this.ctx.fillStyle;
-    this.ctx.beginPath();
     const radius = pRadius || point.radius || this.$$radius;
-    if (fillColor) {
-      this.ctx.fillStyle = fillColor;
-    }
-    this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    this.ctx.fill();
-    this.ctx.closePath();
+    this.drawPointOnScreen(x, y, radius, fillColor);
     this.ctx.fillStyle = lastFillColor;
   };
+
+  $$useCache = true
+
+  imageCache = {}
+
+  drawPointOnScreen(x, y, radius, color) {
+    const { ctx, imageCache, $$useCache } = this;
+    if (!radius) return;
+    /* Grids have the same width, height, color and borderColor will be reused. */
+    const cacheKey = `${radius},${color}`;
+    if ($$useCache && imageCache.hasOwnProperty(cacheKey)) {
+      /* Use cached image. */
+      const cache = imageCache[cacheKey];
+      ctx.putImageData(cache, x, y);
+    } else {
+      /**
+       * Draw offscreenGrid so that a full grid image will be created even though
+       * it isn't visible on screen.
+       */
+      const pointImage = this.drawOffscreenGrid(radius, color);
+      ctx.putImageData(pointImage, x, y);
+      if ($$useCache) {
+        /* Save image in cache. */
+        imageCache[cacheKey] = pointImage;
+      }
+    }
+  }
+
+  drawOffscreenGrid(radius, fillColor) {
+    const canvas = this.offscreenGrid;
+    const ctx = this.offscreenCtx;
+    const width = radius * 2;
+    /* Clear canvas and adjust the size appropriate to the grid. */
+    canvas.width = width;
+    canvas.height = width;
+    ctx.fillStyle = fillColor;
+    ctx.beginPath();
+    ctx.arc(radius, radius, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.closePath();
+    const imageData = ctx.getImageData(0, 0, width, width);
+    const data = imageData.data;
+    for (let i = 0; i < width ** 2; i += 1) {
+      const y = Math.floor(i / width);
+      const x = i % width;
+      if (Math.abs(y - radius) ** 2 + Math.abs(x - radius) ** 2 > radius ** 2) {
+        data[i * 4] = 0;
+        data[i * 4 + 1] = 0;
+        data[i * 4 + 2] = 0;
+        data[i * 4 + 3] = 0;
+      }
+    }
+    return imageData;
+  }
 
   /** drawing */
   $$drawRouteInRequestIdle = (deadLine) => {
