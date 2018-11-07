@@ -126,7 +126,8 @@ export default class MassMarks {
     let cost = 0;
     while (current < totalLength) {
       if (!$$isAutoSpeed) {
-        if (current < $$cursor + count) {
+        /** If current is exceed, then quit */
+        if (current > $$cursor + count) {
           break;
         }
       } else if (cost * 1.5 > timeLeft) {
