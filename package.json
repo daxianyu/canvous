@@ -1,5 +1,5 @@
 {
-  "name": "canvas-mass",
+  "name": "canvous",
   "version": "1.0.1-alpha.10",
   "description": "Draw basic graph in canvas",
   "main": "src/index.js",
