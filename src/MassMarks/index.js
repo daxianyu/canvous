@@ -303,6 +303,7 @@ export default class MassMarks {
   /** generate kdTree data and rearrange to binaryHeap */
   $$generateBinaryData(dataList) {
     if (!dataList.length) {
+      this.$$kdTree = null;
       return new TdArray();
     }
     const kdTree = new KdTree(dataList, this.$$distance, this.$$dimetions);
