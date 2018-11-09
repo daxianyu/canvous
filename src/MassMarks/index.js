@@ -256,7 +256,8 @@ export default class MassMarks {
       this.$$useKd,
       'Only support when useKd is True',
     );
-    if (this.$$kdTree) {
+    /** Only if useKd is true and data exists */
+    if (this.$$useKd && this.$$kdTree) {
       return this.$$kdTree.nearest(center, count, distance);
     }
     return [];
