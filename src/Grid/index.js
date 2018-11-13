@@ -1,12 +1,21 @@
 const invariant = require('invariant');
 
+/**
+ * Default raw point converter;
+ * */
+function pointConvert(point) {
+  return point;
+}
+
 /* Class to render grid with or without border. */
 export default class Grid {
   constructor(ctx, options) {
-    const { data = [], useCache = true } = options
+    const { data = [], useCache = true, pointConverter } = options;
     this.imageCache = {};
     this.ctx = ctx;
     this.$$data = data;
+    /* We can convert point as we wish */
+    this.$$pointConverter = pointConverter || pointConvert;
     this.$$useCache = useCache;
     /**
      * Every grid will be drawn on offscreen canvas first, then cached if required,
@@ -25,9 +34,33 @@ export default class Grid {
    * */
   setOptions = (options) => {
     const { data = this.$$data, useCache = this.$$useCache } = options;
-    this.$$data = data
+    this.$$data = data;
     this.$$useCache = useCache;
-  }
+  };
+
+  /**
+   * Get nearest grid.
+   * @param {object | array} point - hover or clicked point;
+   * @param {function} callback;
+   * @return { number } index - index of grid;
+   * */
+  getNearestGrid = (point, callback) => {
+    let { x, y } = point;
+    if (Array.isArray(point)) {
+      x = point[0];
+      y = point[1];
+    }
+    for (let i = 0; i < this.$$data.length; i += 1) {
+      const { bounds } = this.$$data[i];
+      const { bottomLeft, topRight } = bounds;
+      const { x: x0, y: y1 } = this.$$pointConverter(bottomLeft);
+      const { x: x1, y: y0 } = this.$$pointConverter(topRight);
+      if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
+        callback(i, this.$$data[i]);
+      }
+    }
+    callback(-1, null);
+  };
 
   /**
    * Render many grids. Calling this function draws grids.
@@ -48,7 +81,7 @@ export default class Grid {
    * 3. color: background colour.
    * */
   render = () => {
-    const grids = this.$$data
+    const grids = this.$$data;
     /* Iterate to draw every single grid. */
     grids.forEach((grid) => {
       const {
@@ -63,14 +96,14 @@ export default class Grid {
        * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
        * BottomLeft and topRight bound points coordinates.
        */
-      const { x: x0, y: y1 } = bottomLeft;
-      const { x: x1, y: y0 } = topRight;
+      const { x: x0, y: y1 } = this.$$pointConverter(bottomLeft);
+      const { x: x1, y: y0 } = this.$$pointConverter(topRight);
       /* Decimal point would raise performance and platform consistency issues on canvas. */
       const width = Math.round(x1 - x0);
       const height = Math.round(y1 - y0);
       this.drawGridOnScreen(x0, y0, width, height, color, borderColor);
     });
-  }
+  };
 
   /* Draw a single grid. */
   drawGridOnScreen(x, y, width, height, color, borderColor) {
