@@ -57,6 +57,7 @@ export default class Grid {
       const { x: x1, y: y0 } = this.$$pointConverter(topRight);
       if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
         callback(i, this.$$data[i]);
+        break;
       }
     }
     callback(-1, null);
