@@ -33,7 +33,7 @@ class TwoDArray {
     const firstArray = this.data[0];
     if (firstArray.length === 0) {
       this.data.shift();
-      return this.data.getFirstArray();
+      return this.getFirstArray();
     }
     return this.data[0];
   }
