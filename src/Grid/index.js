@@ -13,10 +13,10 @@ export default class Grid {
     const { data = [], useCache = true, pointConverter } = options;
     this.imageCache = {};
     this.ctx = ctx;
-    this.$$data = data;
+    this.data = data;
     /* We can convert point as we wish */
-    this.$$pointConverter = pointConverter || pointConvert;
-    this.$$useCache = useCache;
+    this.pointConverter = pointConverter || pointConvert;
+    this.useCache = useCache;
     /**
      * Every grid will be drawn on offscreen canvas first, then cached if required,
      * and finally copied to the screen canvas.
@@ -33,9 +33,9 @@ export default class Grid {
    * @param {object} options
    * */
   setOptions = (options) => {
-    const { data = this.$$data, useCache = this.$$useCache } = options;
-    this.$$data = data;
-    this.$$useCache = useCache;
+    const { data = this.data, useCache = this.useCache } = options;
+    this.data = data;
+    this.useCache = useCache;
   };
 
   /**
@@ -50,13 +50,13 @@ export default class Grid {
       x = point[0];
       y = point[1];
     }
-    for (let i = 0; i < this.$$data.length; i += 1) {
-      const { bounds } = this.$$data[i];
+    for (let i = 0; i < this.data.length; i += 1) {
+      const { bounds } = this.data[i];
       const { bottomLeft, topRight } = bounds;
-      const { x: x0, y: y1 } = this.$$pointConverter(bottomLeft);
-      const { x: x1, y: y0 } = this.$$pointConverter(topRight);
+      const { x: x0, y: y1 } = this.pointConverter(bottomLeft);
+      const { x: x1, y: y0 } = this.pointConverter(topRight);
       if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
-        callback(i, this.$$data[i]);
+        callback(i, this.data[i]);
         break;
       }
     }
@@ -82,7 +82,7 @@ export default class Grid {
    * 3. color: background colour.
    * */
   render = () => {
-    const grids = this.$$data;
+    const grids = this.data;
     /* Iterate to draw every single grid. */
     grids.forEach((grid) => {
       const {
@@ -97,8 +97,8 @@ export default class Grid {
        * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
        * BottomLeft and topRight bound points coordinates.
        */
-      const { x: x0, y: y1 } = this.$$pointConverter(bottomLeft);
-      const { x: x1, y: y0 } = this.$$pointConverter(topRight);
+      const { x: x0, y: y1 } = this.pointConverter(bottomLeft);
+      const { x: x1, y: y0 } = this.pointConverter(topRight);
       /* Decimal point would raise performance and platform consistency issues on canvas. */
       const width = Math.round(x1 - x0);
       const height = Math.round(y1 - y0);
@@ -108,12 +108,12 @@ export default class Grid {
 
   /* Draw a single grid. */
   drawGridOnScreen(x, y, width, height, color, borderColor) {
-    const { ctx, imageCache, $$useCache } = this;
+    const { ctx, imageCache, useCache } = this;
     /* Skip if any one of width or height is 0. */
     if (!width || !height) return;
     /* Grids have the same width, height, color and borderColor will be reused. */
     const cacheKey = `${width},${height},${color},${borderColor},`;
-    if ($$useCache && imageCache.hasOwnProperty(cacheKey)) {
+    if (useCache && imageCache.hasOwnProperty(cacheKey)) {
       /* Use cached image. */
       const cache = imageCache[cacheKey];
       ctx.putImageData(cache, x, y);
@@ -124,7 +124,7 @@ export default class Grid {
        */
       const gridImage = this.drawOffscreenGrid(width, height, color, borderColor);
       ctx.putImageData(gridImage, x, y);
-      if ($$useCache) {
+      if (useCache) {
         /* Save image in cache. */
         imageCache[cacheKey] = gridImage;
       }
