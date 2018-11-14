@@ -1,7 +1,2 @@
-import Grid from './Grid';
-import MassMarks from './MassMarks'
-
-export {
-  Grid,
-  MassMarks,
-}
+export Grid from './Grid';
+export MassMarks from './MassMarks';
