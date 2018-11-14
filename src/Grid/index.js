@@ -43,16 +43,6 @@ export default class Grid {
   }
 
   /**
-   * reset options
-   * @param {object} options
-   * */
-  setOptions = (options) => {
-    const { data = this.data, useCache = this.useCache } = options;
-    this.data = data;
-    this.useCache = useCache;
-  };
-
-  /**
    * Get nearest grid.
    * @param {object | array} point - hover or clicked point;
    * @param {function} callback;
@@ -118,6 +108,22 @@ export default class Grid {
       const height = Math.round(y1 - y0);
       this.drawGridOnScreen(x0, y0, width, height, color, borderColor);
     });
+  };
+
+  /**
+   * This is the only API to modify grid.
+   * New options will be merged with old options, such that one could update grid by calling
+   * this API with differentials.
+   */
+  setOptions = (options) => {
+    const {
+      coordinateTransformation = this.coordinateTransformation,
+      data = this.data,
+      useCache = this.useCache,
+    } = options;
+    this.coordinateTransformation = coordinateTransformation;
+    this.data = data;
+    this.useCache = useCache;
   };
 
   /* Draw a single grid. */
