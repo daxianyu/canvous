@@ -1,21 +1,35 @@
 const invariant = require('invariant');
 
 /**
- * Default raw point converter;
- * */
-function pointConvert(point) {
-  return point;
+ * Default coordinate transformation doesn't do anything.
+ */
+function defaultCoordinateTransformation(coordinate) {
+  return coordinate;
 }
 
 /* Class to render grid with or without border. */
 export default class Grid {
   constructor(ctx, options) {
-    const { data = [], useCache = true, pointConverter } = options;
-    this.imageCache = {};
+    const {
+      coordinateTransformation = defaultCoordinateTransformation,
+      data = [],
+      useCache = true,
+    } = options;
+
+    /**
+     * Coordinate transformation will be executed just before calling canvas api.
+     * In most cases, coordinates (bounds for Grid) should have values in pixel, and it is not
+     * necessary to transform coordinates. However, in some rare cases, performing coordinate
+     * transformation here could bring notable performance improvement. Assume coordinates (bounds)
+     * are defined in terms of lngLat, and it won't change ever since. Everytime user zooms or drag
+     * map, one should loop through coordinates, perform coordinate transformation and feed Grid
+     * with coordinates in pixel. However, if this coordinate transformation could be executed in
+     * Grid just before calling canvas api, we boost render performance by escaping a loop.
+     */
+    this.coordinateTransformation = coordinateTransformation;
     this.ctx = ctx;
     this.data = data;
-    /* We can convert point as we wish */
-    this.pointConverter = pointConverter || pointConvert;
+    this.imageCache = {};
     this.useCache = useCache;
     /**
      * Every grid will be drawn on offscreen canvas first, then cached if required,
@@ -53,8 +67,8 @@ export default class Grid {
     for (let i = 0; i < this.data.length; i += 1) {
       const { bounds } = this.data[i];
       const { bottomLeft, topRight } = bounds;
-      const { x: x0, y: y1 } = this.pointConverter(bottomLeft);
-      const { x: x1, y: y0 } = this.pointConverter(topRight);
+      const { x: x0, y: y1 } = this.coordinateTransformation(bottomLeft);
+      const { x: x1, y: y0 } = this.coordinateTransformation(topRight);
       if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
         callback(i, this.data[i]);
         break;
@@ -97,8 +111,8 @@ export default class Grid {
        * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
        * BottomLeft and topRight bound points coordinates.
        */
-      const { x: x0, y: y1 } = this.pointConverter(bottomLeft);
-      const { x: x1, y: y0 } = this.pointConverter(topRight);
+      const { x: x0, y: y1 } = this.coordinateTransformation(bottomLeft);
+      const { x: x1, y: y0 } = this.coordinateTransformation(topRight);
       /* Decimal point would raise performance and platform consistency issues on canvas. */
       const width = Math.round(x1 - x0);
       const height = Math.round(y1 - y0);
