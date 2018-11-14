@@ -7,6 +7,21 @@ function defaultCoordinateTransformation(coordinate) {
   return coordinate;
 }
 
+function isBoundContainsPoint(point, x0, x1, y0, y1) {
+  let { x, y } = point;
+  /* Compatible with both object and array. */
+  if (Array.isArray(point)) {
+    x = point[0];
+    y = point[1];
+  }
+
+  if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
+    return true;
+  }
+
+  return false;
+}
+
 /* Class to render grid with or without border. */
 export default class Grid {
   constructor(ctx, options) {
@@ -42,30 +57,25 @@ export default class Grid {
     this.offscreenCtx = this.offscreenGrid.getContext('2d');
   }
 
-  /**
-   * Get nearest grid.
-   * @param {object | array} point - hover or clicked point;
-   * @param {function} callback;
-   * @return { number } index - index of grid;
-   * */
-  getNearestGrid = (point, callback) => {
-    let { x, y } = point;
-    if (Array.isArray(point)) {
-      x = point[0];
-      y = point[1];
-    }
-    for (let i = 0; i < this.data.length; i += 1) {
-      const { bounds } = this.data[i];
+  /* Iterate all grids to find grids that contains this point. */
+  findGridsContainPoint = (point, cb) => {
+    const gridIds = [];
+    const grids = [];
+
+    this.data.forEach((grid, index) => {
+      const { bounds } = grid;
       const { bottomLeft, topRight } = bounds;
       const { x: x0, y: y1 } = this.coordinateTransformation(bottomLeft);
       const { x: x1, y: y0 } = this.coordinateTransformation(topRight);
-      if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
-        callback(i, this.data[i]);
-        break;
+
+      if (isBoundContainsPoint(point, x0, x1, y0, y1)) {
+        gridIds.push(index);
+        grids.push(grid);
       }
-    }
-    callback(-1, null);
-  };
+    });
+    /* Returns a list of grid ids and grid objects */
+    return cb(gridIds, grids);
+  }
 
   /**
    * Render many grids. Calling this function draws grids.
@@ -108,7 +118,7 @@ export default class Grid {
       const height = Math.round(y1 - y0);
       this.drawGridOnScreen(x0, y0, width, height, color, borderColor);
     });
-  };
+  }
 
   /**
    * This is the only API to modify grid.
@@ -124,7 +134,7 @@ export default class Grid {
     this.coordinateTransformation = coordinateTransformation;
     this.data = data;
     this.useCache = useCache;
-  };
+  }
 
   /* Draw a single grid. */
   drawGridOnScreen(x, y, width, height, color, borderColor) {
