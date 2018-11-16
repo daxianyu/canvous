@@ -15,6 +15,22 @@ export default class Arcs extends Scheduler {
     this.rate = rate;
   }
 
+  /**
+   * This is the only API to modify grid.
+   * New options will be merged with old options, such that one could update grid by calling
+   * this API with differentials.
+   */
+  setOptions = (options) => {
+    const {
+      coordinateTransformation = this.coordinateTransformation,
+      data,
+    } = options;
+    if (data && data !== this.data) {
+      this.data = new TwoDArray(data);
+    }
+    this.coordinateTransformation = coordinateTransformation;
+  };
+
   /* Implement Schedule dataHandler */
   dataHandler(index, data) {
     this.drawArcs(data, this.rate);
