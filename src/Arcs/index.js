@@ -49,8 +49,8 @@ export default class Arcs extends Scheduler {
     /**
      * Transform other unit to x-y;
      * */
-    point1 = this.coordinateTransformation(point1)
-    point2 = this.coordinateTransformation(point2)
+    point1 = this.coordinateTransformation(point1);
+    point2 = this.coordinateTransformation(point2);
     points = [point1, point2];
     const radiusAndCenters = getMidperpandicular(point1, point2)(rate);
     /* With two points and one radius, we can obtain two circles */
@@ -63,5 +63,10 @@ export default class Arcs extends Scheduler {
     } else {
       this.drawArc(c2, points, radius);
     }
+  }
+
+  /* Uniform method */
+  render() {
+    this.start();
   }
 }
