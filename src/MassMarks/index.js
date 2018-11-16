@@ -1,8 +1,9 @@
 import invariant from 'invariant';
 import { kdTree as KdTree } from 'kd-tree-javascript';
-import TdArray from './2dArray';
+import TdArray from '../base/2dArray';
 
 const MAXSIZE = 30000;
+const SPEED_MULTIPLE = 1.5;
 
 // 13 layers
 const MAX_NEAREST_COUNT = (2 ** 13) - 1;
@@ -38,6 +39,10 @@ export default class MassMarks {
       Array.isArray(data),
       'Data should be array',
     );
+    /**
+     * Options should be kept for when new options given, compare.
+     * */
+    this.options = options;
     /** Canvas context */
     this.ctx = ctx;
     /** Point List data */
@@ -130,7 +135,8 @@ export default class MassMarks {
         if (current > $$cursor + count) {
           break;
         }
-      } else if (cost * 1.5 > timeLeft) {
+        /* Adjust draw speed, left time  */
+      } else if (cost > timeLeft / SPEED_MULTIPLE) {
         break;
       }
       /** Layer restrict */
