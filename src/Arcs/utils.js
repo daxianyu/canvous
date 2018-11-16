@@ -26,7 +26,10 @@ export function getMidperpandicular(point1, point2) {
       const y = (y1 + y2) / 2;
       const R = stringLength / rate;
       const distance = (R ** 2 - (stringLength / 2) ** 2) ** 0.5;
-      return [[x1 - distance, y], [x1 + distance, y]];
+      return {
+        centers: [[x1 - distance, y], [x1 + distance, y]],
+        radius: R,
+      };
     };
   }
 
@@ -38,7 +41,10 @@ export function getMidperpandicular(point1, point2) {
       const x = (x1 + x2) / 2;
       const R = stringLength / rate;
       const distance = (R ** 2 - (stringLength / 2) ** 2) ** 0.5;
-      return [[x, y1 - distance], [x, y1 + distance]];
+      return {
+        centers: [[x, y1 - distance], [x, y1 + distance]],
+        radius: R,
+      };
     };
   }
 
