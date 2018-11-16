@@ -2,8 +2,8 @@
  * Given two points, return midperpandicular func
  * */
 export function getMidperpandicular(point1, point2) {
-  let { x1, y1 } = point1;
-  let { x2, y2 } = point2;
+  let { x: x1, y: y1 } = point1;
+  let { x: x2, y: y2 } = point2;
   if (Array.isArray(point1)) {
     x1 = point1[0];
     y1 = point1[1];
