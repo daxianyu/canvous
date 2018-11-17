@@ -1,23 +1,11 @@
 import invariant from 'invariant';
 import { kdTree as KdTree } from 'kd-tree-javascript';
 import TdArray from '../base/2dArray';
+import Scheduler from '../Scheduler';
 
 const MAXSIZE = 30000;
-const SPEED_MULTIPLE = 1.5;
-
 // 13 layers
 const MAX_NEAREST_COUNT = (2 ** 13) - 1;
-
-/** Default small, auto increase */
-const DEFAULT = 16;
-const SMOOTH = 128;
-const FAST = 512;
-
-const SPEED = {
-  FAST,
-  DEFAULT,
-  SMOOTH,
-};
 
 function pointConvert(point) {
   return point;
@@ -30,68 +18,59 @@ function kdDistance(a, b) {
 /**
  * Draw mass points without block
  * */
-export default class MassMarks {
+export default class MassMarks extends Scheduler {
   constructor(ctx, options) {
     const {
-      data, drawer, speed, distance, dimension, pointConverter, useKd = true, layer = -1, radius = 1,
+      data,
+      drawer,
+      distance = kdDistance,
+      dimension = ['x', 'y'],
+      pointConverter = pointConvert,
+      useKd = true,
+      /** Set max layers of points
+       * 1 layer: 1 point
+       * 2 layer: 1 + 2 points
+       * 3 layer: 1 + 2 + 4 + points
+       * ...
+       *  */
+      layer = -1,
+      radius = 1,
     } = options;
     invariant(
       Array.isArray(data),
       'Data should be array',
     );
+    let processedData;
+    let kdTree = null;
+    if (useKd) {
+      kdTree = MassMarks.generateKdTree(data, distance, dimension);
+      processedData = MassMarks.generateBinaryData(kdTree);
+    } else {
+      processedData = MassMarks.generateNormalData(data);
+    }
+    super({ data: processedData });
+    this.$$kdTree = kdTree;
+
+    /** Canvas context */
+    this.ctx = ctx;
     /**
      * Options should be kept for when new options given, compare.
      * */
-    this.options = options;
-    /** Canvas context */
-    this.ctx = ctx;
-    /** Point List data */
-    this.$$data = data;
-    /** If set point list in kd-tree */
-    this.$$useKd = useKd;
-    /** Set max layers of points
-     * 1 layer: 1 point
-     * 2 layer: 1 + 2 points
-     * 3 layer: 1 + 2 + 4 + points
-     * ...
-     *  */
-    this.$$layer = layer;
-    /** Point radius */
-    this.$$radius = radius;
-    /** Point drawer */
-    this.$$drawer = drawer || this.drawer;
-    /** Kd-tree distance method */
-    this.$$distance = distance || kdDistance;
-    /** Kd-tree dimension */
-    this.$$dimetions = dimension || ['x', 'y'];
-    /** Point converter */
-    this.$$pointConverter = pointConverter || pointConvert;
-    /** Draw speed: points draw in 1ms, default auto */
-    this.setSpeed(speed);
-    if (useKd) {
-      this.$$processedDataList = this.$$generateBinaryData(data);
-    } else {
-      this.$$processedDataList = MassMarks.$$generateNormalData(data);
-    }
+    this.options = {
+      data,
+      drawer: drawer || this.drawer,
+      distance,
+      dimension,
+      pointConverter,
+      useKd,
+      layer,
+      radius,
+    };
     /**
      * start draw points
      * */
-    this.render();
+    this.start();
   }
-
-  $$kdTree = null;
-
-  /** Max layers of drawing points tree, -1 for no limit */
-  $$layer = -1;
-
-  /** Idle callback handler */
-  $$idleHandler = undefined;
-
-  /** indicate the index of points data array */
-  $$cursor = 0;
-
-  /** save data in kdTree format */
-  $$processedDataList = [];
 
   /** drawer
    * Draw point in canvas
@@ -100,7 +79,7 @@ export default class MassMarks {
     const { x, y, fillColor, radius: pRadius } = point;
     const lastFillColor = this.ctx.fillStyle;
     this.ctx.beginPath();
-    const radius = pRadius || point.radius || this.$$radius;
+    const radius = pRadius || point.radius || this.options.radius;
     if (fillColor) {
       this.ctx.fillStyle = fillColor;
     }
@@ -110,104 +89,21 @@ export default class MassMarks {
     this.ctx.fillStyle = lastFillColor;
   };
 
-  /** drawing */
-  $$drawRouteInRequestIdle = (deadLine) => {
-    const {
-      $$processedDataList: dataList, $$cursor, $$speed, $$layer, $$isAutoSpeed,
-    } = this;
-    let shouldStopDraw = false;
-    const totalLength = dataList.length;
-    if ($$cursor > totalLength) return;
-
-    /** Compare time every time after drawn */
-    const timeLeft = deadLine.timeRemaining();
-    const count = Math.ceil(timeLeft * $$speed);
-
-    let current = $$cursor;
-
-    /** Record cost time and drawn points */
-    const start = Date.now();
-    let increment;
-    let cost = 0;
-    while (current < totalLength) {
-      if (!$$isAutoSpeed) {
-        /** If current is exceed, then quit */
-        if (current > $$cursor + count) {
-          break;
-        }
-        /* Adjust draw speed, left time  */
-      } else if (cost > timeLeft / SPEED_MULTIPLE) {
-        break;
-      }
-      /** Layer restrict */
-      if ($$layer > -1) {
-        if (current > ((2 ** $$layer) - 1)) {
-          shouldStopDraw = true;
-          break;
-        }
-      }
-      /** Get raw point, then convert it to deliver to drawer */
-      let point = dataList.peep(current);
-      point = this.$$pointConverter(point);
-      this.$$drawer(point);
-      current += 1;
-      cost = Date.now() - start;
-    }
-    if (current === totalLength) {
-      shouldStopDraw = true;
-    }
-    if ($$isAutoSpeed) {
-      /** Calculate actual speed and adjust it if slow or fast */
-      cost = Date.now() - start;
-      increment = current - this.$$cursor;
-      /** Avoid 0 cause err */
-      if (cost > 0) {
-        const averageDrawSpeed = increment / cost;
-        this.$$speed = Math.ceil(averageDrawSpeed);
-      }
-    }
-    this.$$cursor = current;
-    /** Stop loop when finished */
-    if (shouldStopDraw) return;
-    this.$$loopStack();
-  };
-
-  /** pause < continue < render */
-  /** start or stop loop */
-  pause() {
-    if (this.$$idleHandler) {
-      window.cancelIdleCallback(this.$$idleHandler);
-      this.$$idleHandler = undefined;
-    }
+  dataHandler(index, data) {
+    const point = this.options.pointConverter(data);
+    this.options.drawer(point);
   }
 
-  continue(fn) {
-    if (fn) {
-      this.$$drawer = fn;
+  shouldScheduleStop(index) {
+    const { layer } = this.options;
+    if (layer === -1) {
+      return false;
     }
-    this.pause();
-    this.$$loopStack();
+    return (index > 2 ** layer);
   }
 
-  render(fn) {
-    this.$$cursor = 0;
-    this.continue(fn);
-  }
-
-  /** Reset speed */
-  setSpeed(speed) {
-    this.$$isAutoSpeed = (speed === undefined);
-    if (speed !== undefined) {
-      if (typeof speed === 'string') {
-        this.$$speed = SPEED[speed.toUpperCase()] || DEFAULT;
-      }
-      if (typeof speed === 'number') {
-        this.$$speed = speed;
-      }
-    } else {
-      // auto init speed
-      this.$$speed = DEFAULT;
-    }
+  render() {
+    this.start();
   }
 
   /**
@@ -217,36 +113,39 @@ export default class MassMarks {
    * */
   setOptions(options) {
     const {
-      data, layer = this.$$layer,
-      drawer = this.$$drawer, speed, useKd = this.$$useKd,
-      radius = this.$$radius, distance = this.$$distance, dimension = this.$$dimetions,
+      data,
+      drawer = this.options.drawer,
+      layer = this.options.layer,
+      useKd = this.options.useKd,
+      radius = this.options.radius,
+      distance = this.options.distance,
+      dimension = this.options.dimension,
+      pointConverter = this.options.pointConverter,
     } = options;
-    this.$$dimetions = dimension;
-    this.$$distance = distance;
-    this.$$radius = radius;
-    this.$$layer = layer;
-    this.$$drawer = drawer;
-    if (speed !== undefined) {
-      this.setSpeed(speed);
-    }
-    if (data && this.$$data !== data) {
-      this.$$data = data;
+
+    this.options = {
+      data: this.options.data,
+      drawer,
+      layer,
+      useKd,
+      radius,
+      distance,
+      dimension,
+      pointConverter,
+    };
+
+    if (data && this.options.data !== data) {
+      this.options.data = data;
       invariant(
         Array.isArray(data),
-        'DataList should be array',
+        'Prop data should be array',
       );
       if (useKd) {
-        this.$$processedDataList = this.$$generateBinaryData(data);
+        this.kdTree = MassMarks.generateKdTree(data, distance, dimension);
+        this.data = MassMarks.generateBinaryData(this.kdTree);
       } else {
-        this.$$processedDataList = MassMarks.$$generateNormalData(data);
+        this.data = MassMarks.generateNormalData(data);
       }
-    }
-    if (drawer) {
-      invariant(
-        typeof drawer === 'function',
-        'Parameter drawer should be function',
-      );
-      this.$$drawer = drawer;
     }
     this.render();
   }
@@ -259,31 +158,33 @@ export default class MassMarks {
    * */
   getNearest(center, distance, count = MAX_NEAREST_COUNT) {
     invariant(
-      this.$$useKd,
+      this.options.useKd,
       'Only support when useKd is True',
     );
     /** Only if useKd is true and data exists */
-    if (this.$$useKd && this.$$kdTree) {
+    if (this.options.useKd && this.$$kdTree) {
       return this.$$kdTree.nearest(center, count, distance);
     }
     return [];
   }
 
-  /** Loop */
-  $$loopStack() {
-    this.$$idleHandler = window.requestIdleCallback(this.$$drawRouteInRequestIdle);
-  }
-
   /** Random data arrange if not use kd-tree
    * @param {array} dataList raw data
    * */
-  static $$generateNormalData (dataList) {
+  static generateNormalData (dataList) {
     if (!dataList.length) {
       return new TdArray();
     }
     const newDataListArray = dataList.slice();
     newDataListArray.sort(() => (Math.random() - 0.5));
     return new TdArray(newDataListArray);
+  }
+
+  static generateKdTree(dataList, distance, dimensions) {
+    if (!dataList.length) {
+      return null;
+    }
+    return new KdTree(dataList, distance, dimensions);
   }
 
   /** Travel tree to generate array */
@@ -308,13 +209,10 @@ export default class MassMarks {
   }
 
   /** generate kdTree data and rearrange to binaryHeap */
-  $$generateBinaryData(dataList) {
-    if (!dataList.length) {
-      this.$$kdTree = null;
+  static generateBinaryData(kdTree) {
+    if (kdTree === null) {
       return new TdArray();
     }
-    const kdTree = new KdTree(dataList, this.$$distance, this.$$dimetions);
-    this.$$kdTree = kdTree;
     return MassMarks.travelKdTree(kdTree);
   }
 }
