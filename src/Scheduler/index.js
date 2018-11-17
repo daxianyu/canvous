@@ -21,7 +21,14 @@ export default class Scheduler {
 
   /** Loop */
   loopStack() {
-    this.idleHandler = window.requestIdleCallback(this.runInRequestIdle);
+    if (this.lazy) {
+      this.idleHandler = window.requestIdleCallback(this.runInRequestIdle);
+    } else {
+      /*  Block, it will stop until current meet lastIndex */
+      this.runInRequestIdle({
+        timeRemaining: () => 9999,
+      });
+    }
   }
 
   /** drawing */
@@ -36,7 +43,7 @@ export default class Scheduler {
     let shouldRender = true;
     let shouldStopDraw = false;
     const totalLength = data.length;
-    if (cursor > totalLength) return;
+    if (cursor >= totalLength) return;
 
     /* Compare time every time after drawn */
     const timeLeft = deadLine.timeRemaining();
@@ -46,7 +53,7 @@ export default class Scheduler {
     let cost = 0;
     while (current < totalLength) {
       /* If not time left, return */
-      if (cost > timeLeft / SPEED_MULTIPLE && this.lazy) {
+      if (cost > timeLeft / SPEED_MULTIPLE) {
         break;
       }
       /* Get raw point by method of TwoDArray, then convert it to deliver to drawer */
