@@ -8,13 +8,14 @@ const SPEED_MULTIPLE = 1.2;
  * */
 export default class Scheduler {
   constructor(options) {
-    const { data } = options;
+    const { data, lazy = true } = options;
     if (!(data instanceof TwoDArray)) {
       throw new Error('Prop data required to be instanceOf TwoDArray!');
     }
     /* All data, mark item by cursor */
     this.data = data;
     this.cursor = 0;
+    this.lazy = lazy;
     this.idleHandler = undefined;
   }
 
@@ -45,7 +46,7 @@ export default class Scheduler {
     let cost = 0;
     while (current < totalLength) {
       /* If not time left, return */
-      if (cost > timeLeft / SPEED_MULTIPLE) {
+      if (cost > timeLeft / SPEED_MULTIPLE && this.lazy) {
         break;
       }
       /* Get raw point by method of TwoDArray, then convert it to deliver to drawer */

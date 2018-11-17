@@ -31,11 +31,13 @@ export default class Grid extends Scheduler {
     const {
       coordinateTransformation = defaultCoordinateTransformation,
       data = [],
+      lazy = true,
       useCache = true,
     } = options;
 
     super({
       data: new TwoDArray(data),
+      lazy,
     });
     /**
      * Coordinate transformation will be executed just before calling canvas api.
@@ -51,6 +53,7 @@ export default class Grid extends Scheduler {
     this.imageCache = {};
     this.options = {
       data,
+      lazy,
       useCache,
       coordinateTransformation,
     };
@@ -144,14 +147,17 @@ export default class Grid extends Scheduler {
   setOptions = (options) => {
     const {
       data = this.options.data,
+      lazy = this.options.lazy,
       useCache = this.options.useCache,
       coordinateTransformation = this.options.coordinateTransformation,
     } = options;
     if (this.options.data !== data) {
       this.data = new TwoDArray(data);
     }
+    this.lazy = lazy;
     this.options = {
       data,
+      lazy,
       useCache,
       coordinateTransformation,
     };
