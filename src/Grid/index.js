@@ -1,3 +1,6 @@
+import Scheduler from '../Scheduler';
+import TwoDArray from '../base/2dArray';
+
 const invariant = require('invariant');
 
 /**
@@ -23,7 +26,7 @@ function isBoundContainsPoint(point, x0, x1, y0, y1) {
 }
 
 /* Class to render grid with or without border. */
-export default class Grid {
+export default class Grid extends Scheduler {
   constructor(ctx, options) {
     const {
       coordinateTransformation = defaultCoordinateTransformation,
@@ -31,6 +34,9 @@ export default class Grid {
       useCache = true,
     } = options;
 
+    super({
+      data: new TwoDArray(data),
+    });
     /**
      * Coordinate transformation will be executed just before calling canvas api.
      * In most cases, coordinates (bounds for Grid) should have values in pixel, and it is not
@@ -41,11 +47,13 @@ export default class Grid {
      * with coordinates in pixel. However, if this coordinate transformation could be executed in
      * Grid just before calling canvas api, we boost render performance by escaping a loop.
      */
-    this.coordinateTransformation = coordinateTransformation;
     this.ctx = ctx;
-    this.data = data;
     this.imageCache = {};
-    this.useCache = useCache;
+    this.options = {
+      data,
+      useCache,
+      coordinateTransformation,
+    };
     /**
      * Every grid will be drawn on offscreen canvas first, then cached if required,
      * and finally copied to the screen canvas.
@@ -65,8 +73,9 @@ export default class Grid {
     this.data.forEach((grid, index) => {
       const { bounds } = grid;
       const { bottomLeft, topRight } = bounds;
-      const { x: x0, y: y1 } = this.coordinateTransformation(bottomLeft);
-      const { x: x1, y: y0 } = this.coordinateTransformation(topRight);
+      const { coordinateTransformation } = this.options;
+      const { x: x0, y: y1 } = coordinateTransformation(bottomLeft);
+      const { x: x1, y: y0 } = coordinateTransformation(topRight);
 
       if (isBoundContainsPoint(point, x0, x1, y0, y1)) {
         gridIds.push(index);
@@ -77,6 +86,31 @@ export default class Grid {
     return cb(gridIds, grids);
   }
 
+  drawGrid(grid) {
+    const {
+      bounds = {},
+      borderColor,
+      color = 'black',
+    } = grid;
+    const { coordinateTransformation } = this.options;
+    const { bottomLeft, topRight } = bounds;
+    invariant(bottomLeft, 'bounds must have prop bottomLeft');
+    invariant(topRight, 'bounds must have prop topRight');
+    /**
+     * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
+     * BottomLeft and topRight bound points coordinates.
+     */
+    const { x: x0, y: y1 } = coordinateTransformation(bottomLeft);
+    const { x: x1, y: y0 } = coordinateTransformation(topRight);
+    /* Decimal point would raise performance and platform consistency issues on canvas. */
+    const width = Math.round(x1 - x0);
+    const height = Math.round(y1 - y0);
+    this.drawGridOnScreen(x0, y0, width, height, color, borderColor);
+  }
+
+  dataHandler(index, data) {
+    this.drawGrid(data);
+  }
   /**
    * Render many grids. Calling this function draws grids.
    * @param {object[]} grids - Represents a list of grids.
@@ -95,29 +129,9 @@ export default class Grid {
    * 2. borderColor: outline colour.
    * 3. color: background colour.
    * */
+
   render = () => {
-    const grids = this.data;
-    /* Iterate to draw every single grid. */
-    grids.forEach((grid) => {
-      const {
-        bounds = {},
-        borderColor,
-        color = 'black',
-      } = grid;
-      const { bottomLeft, topRight } = bounds;
-      invariant(bottomLeft, 'bounds must have prop bottomLeft');
-      invariant(topRight, 'bounds must have prop topRight');
-      /**
-       * Assume topLeft bound point as (x0, y0), bottomRight bound point as (x1, y1).
-       * BottomLeft and topRight bound points coordinates.
-       */
-      const { x: x0, y: y1 } = this.coordinateTransformation(bottomLeft);
-      const { x: x1, y: y0 } = this.coordinateTransformation(topRight);
-      /* Decimal point would raise performance and platform consistency issues on canvas. */
-      const width = Math.round(x1 - x0);
-      const height = Math.round(y1 - y0);
-      this.drawGridOnScreen(x0, y0, width, height, color, borderColor);
-    });
+    this.start();
   }
 
   /**
@@ -127,18 +141,24 @@ export default class Grid {
    */
   setOptions = (options) => {
     const {
-      coordinateTransformation = this.coordinateTransformation,
-      data = this.data,
-      useCache = this.useCache,
+      data = this.options.data,
+      useCache = this.options.useCache,
+      coordinateTransformation = this.options.coordinateTransformation,
     } = options;
-    this.coordinateTransformation = coordinateTransformation;
-    this.data = data;
-    this.useCache = useCache;
+    if (this.options.data !== data) {
+      this.data = new TwoDArray(data);
+    }
+    this.options = {
+      data,
+      useCache,
+      coordinateTransformation,
+    };
   }
 
   /* Draw a single grid. */
   drawGridOnScreen(x, y, width, height, color, borderColor) {
-    const { ctx, imageCache, useCache } = this;
+    const { ctx, imageCache, options } = this;
+    const { useCache } = options;
     /* Skip if any one of width or height is 0. */
     if (!width || !height) return;
     /* Grids have the same width, height, color and borderColor will be reused. */
