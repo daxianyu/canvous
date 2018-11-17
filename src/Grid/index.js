@@ -70,7 +70,9 @@ export default class Grid extends Scheduler {
     const gridIds = [];
     const grids = [];
 
-    this.data.forEach((grid, index) => {
+    /* TwoDArray does not support forEach yet */
+    for (let i = 0; i < this.data.length; i += 1) {
+      const grid = this.data.peep(i);
       const { bounds } = grid;
       const { bottomLeft, topRight } = bounds;
       const { coordinateTransformation } = this.options;
@@ -78,10 +80,10 @@ export default class Grid extends Scheduler {
       const { x: x1, y: y0 } = coordinateTransformation(topRight);
 
       if (isBoundContainsPoint(point, x0, x1, y0, y1)) {
-        gridIds.push(index);
+        gridIds.push(i);
         grids.push(grid);
       }
-    });
+    }
     /* Returns a list of grid ids and grid objects */
     return cb(gridIds, grids);
   }
