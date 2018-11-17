@@ -24,11 +24,13 @@ export default class Arcs extends Scheduler {
     const {
       coordinateTransformation = this.coordinateTransformation,
       data,
+      rate,
     } = options;
     if (data && data !== this.data) {
       this.data = new TwoDArray(data);
     }
     this.coordinateTransformation = coordinateTransformation;
+    this.rate = rate;
   };
 
   /* Implement Schedule dataHandler */
