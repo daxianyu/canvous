@@ -49,7 +49,7 @@ export default class MassMarks extends Scheduler {
       processedData = MassMarks.generateNormalData(data);
     }
     super({ data: processedData });
-    this.$$kdTree = kdTree;
+    this.kdTree = kdTree;
 
     /** Canvas context */
     this.ctx = ctx;
@@ -162,8 +162,8 @@ export default class MassMarks extends Scheduler {
       'Only support when useKd is True',
     );
     /** Only if useKd is true and data exists */
-    if (this.options.useKd && this.$$kdTree) {
-      return this.$$kdTree.nearest(center, count, distance);
+    if (this.options.useKd && this.kdTree) {
+      return this.kdTree.nearest(center, count, distance);
     }
     return [];
   }
