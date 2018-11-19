@@ -24,7 +24,7 @@ export default class Scheduler {
     if (this.lazy) {
       this.idleHandler = window.requestIdleCallback(this.runInRequestIdle);
     } else {
-      /*  Block, it will stop until current meet lastIndex */
+      /*  Block, it will not stop until current meet lastIndex */
       this.runInRequestIdle({
         timeRemaining: () => 9999,
       });
