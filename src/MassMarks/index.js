@@ -7,7 +7,7 @@ const MAXSIZE = 30000;
 // 13 layers
 const MAX_NEAREST_COUNT = (2 ** 13) - 1;
 
-function pointConvert(point) {
+function defaultCoordinateTransformation(point) {
   return point;
 }
 
@@ -25,7 +25,7 @@ export default class MassMarks extends Scheduler {
       drawer,
       distance = kdDistance,
       dimension = ['x', 'y'],
-      pointConverter = pointConvert,
+      coordinateTransformation = defaultCoordinateTransformation,
       useKd = true,
       /** Set max layers of points
        * 1 layer: 1 point
@@ -61,7 +61,7 @@ export default class MassMarks extends Scheduler {
       drawer: drawer || this.drawer,
       distance,
       dimension,
-      pointConverter,
+      coordinateTransformation,
       useKd,
       layer,
       radius,
@@ -90,7 +90,7 @@ export default class MassMarks extends Scheduler {
   };
 
   dataHandler(index, data) {
-    const point = this.options.pointConverter(data);
+    const point = this.options.coordinateTransformation(data);
     this.options.drawer(point);
   }
 
@@ -120,7 +120,7 @@ export default class MassMarks extends Scheduler {
       radius = this.options.radius,
       distance = this.options.distance,
       dimension = this.options.dimension,
-      pointConverter = this.options.pointConverter,
+      coordinateTransformation = this.options.coordinateTransformation,
     } = options;
 
     this.options = {
@@ -131,7 +131,7 @@ export default class MassMarks extends Scheduler {
       radius,
       distance,
       dimension,
-      pointConverter,
+      coordinateTransformation,
     };
 
     if (data && this.options.data !== data) {
