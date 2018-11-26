@@ -31,16 +31,14 @@ export default class Scheduler {
     }
   }
 
-  /** drawing */
+  /** Control data */
   runInRequestIdle = (deadLine) => {
-    /**
-     * It render this point or not, only this point, other points wil render.
-     * It stop render or not, not only this point, also next points.
-     * */
     const {
       data, cursor,
     } = this;
+    /* Render this point or not. If false, only this point stop, other points wil render. */
     let shouldRender = true;
+    /* Stop render or not. If false, not only this point stop, next points also stop. */
     let shouldStopDraw = false;
     const totalLength = data.length;
     if (cursor >= totalLength) return;
