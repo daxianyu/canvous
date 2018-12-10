@@ -5,19 +5,19 @@
  * @return {*}
  */
 function matrixMultipleVector(matrix, vector) {
-  return matrix.map(row=>{
+  return matrix.map(row => {
     return row.reduce((sum, cell, i) => {
       return sum + cell * vector[i];
-    }, 0)
-  })
+    }, 0);
+  });
 }
 
-function matrixMultiplication(a, b){
-  return a.map(function(row){
-    return row.map(function(_,i){
-      return row.reduce(function(sum,cell,j){
-        return sum+cell*b[j][i];
-      },0);
+function matrixMultiplication(a, b) {
+  return a.map((row) => {
+    return row.map((_, i) => {
+      return row.reduce((sum, cell, j) => {
+        return sum + cell * b[j][i];
+      }, 0);
     });
   });
 }
@@ -28,7 +28,7 @@ function getRadOfVector(vector) {
   if (x >= 0 && y >= 0) {
     return rad;
   }
-  if(x <= 0) {
+  if (x <= 0) {
     return Math.PI + rad;
   }
   return 2 * Math.PI + rad;
@@ -48,7 +48,7 @@ function getRotateMatrix(rad) {
     [cosRad, -sinRad, 0],
     [sinRad, cosRad, 0],
     [0, 0, 1],
-  ]
+  ];
 }
 
 function testM() {
@@ -62,18 +62,18 @@ function testM() {
 
   const v = [1, 2, 0];
 
-  for(let i=0;i < limit;i++) {
+  for (let i = 0; i < limit; i++) {
     data.push([
-      3 * Math.random(),5 * Math.random(),
-    ])
+      3 * Math.random(), 5 * Math.random(),
+    ]);
   }
 
-  let aa = performance.now();
-  for(let i=0;i < limit;i++){
+  const aa = performance.now();
+  for (let i = 0; i < limit; i++) {
     const rad = getRadOfVector(data[i]);
     const rotate = getRotateMatrix(rad);
     const result = matrixMultiplication(scale, rotate);
-    matrixMultipleVector(result, v)
+    matrixMultipleVector(result, v);
   }
   console.log(performance.now() - aa);
 }
