@@ -1,4 +1,4 @@
-import { getMidperpandicular, getRadOfVector } from './utils';
+import { getMidperpandicular, getRadOfVector, getTransformedRadiusAndCenter } from './utils';
 import Scheduler from '../Scheduler';
 import TwoDArray from '../base/2dArray';
 
@@ -13,6 +13,22 @@ export default class Arcs extends Scheduler {
     this.ctx = ctx;
     this.coordinateTransformation = coordinateTransformation;
     this.rate = rate;
+    this.generateRelativeCenterAndRadius(rate);
+    this.time1 = 0;
+    this.count = 0;
+  }
+
+  generateRelativeCenterAndRadius(rate) {
+    /** Generate initial radius and centers,
+     * any others could calculate by rotation or translation or scale
+     */
+    const radiusAndCenters = getMidperpandicular([0, 0], [1, 0])(rate);
+    /* With two points and one radius, we can obtain two circles */
+    const { centers, radius } = radiusAndCenters;
+    this.relativeCenterAndRadius = {
+      centers,
+      radius,
+    };
   }
 
   /**
@@ -24,13 +40,14 @@ export default class Arcs extends Scheduler {
     const {
       coordinateTransformation = this.coordinateTransformation,
       data,
-      rate,
+      rate = this.rate,
     } = options;
     if (data && data !== this.data) {
       this.data = new TwoDArray(data);
     }
     this.coordinateTransformation = coordinateTransformation;
     this.rate = rate;
+    this.generateRelativeCenterAndRadius(rate);
   };
 
   /* Implement Schedule dataHandler */
@@ -57,12 +74,20 @@ export default class Arcs extends Scheduler {
       startAngle = endAngle;
       endAngle = temp;
     }
+    if (this.count > 10000) {
+      console.log(this.time1);
+      this.time1 = 0
+      this.count = 0
+    } else {
+      this.time1 += (performance.now() - this.startTime);
+      this.count += 1;
+    }
     this.ctx.beginPath();
     this.ctx.arc(xc, yc, radius, startAngle, endAngle);
     this.ctx.stroke();
   }
 
-  drawArcs(points, rate) {
+  drawArcs(points) {
     let [point1, point2] = points;
     /**
      * Transform other unit to x-y;
@@ -70,16 +95,21 @@ export default class Arcs extends Scheduler {
     point1 = this.coordinateTransformation(point1);
     point2 = this.coordinateTransformation(point2);
     points = [point1, point2];
-    const radiusAndCenters = getMidperpandicular(point1, point2)(rate);
-    /* With two points and one radius, we can obtain two circles */
-    const { centers, radius } = radiusAndCenters;
-    const [c1, c2] = centers;
-    this.drawArc(c1, points, radius);
 
+    this.startTime = performance.now();
+    const { centers, radius } = this.relativeCenterAndRadius;
     if (Math.random() > 0.5) {
-      this.drawArc(c1, points, radius);
+      const {
+        center,
+        radius: transformedRadius,
+      } = getTransformedRadiusAndCenter(points, centers[0], radius);
+      this.drawArc(center, points, transformedRadius);
     } else {
-      this.drawArc(c2, points, radius);
+      const {
+        center,
+        radius: transformedRadius,
+      } = getTransformedRadiusAndCenter(points, centers[1], radius);
+      this.drawArc(center, points, transformedRadius);
     }
   }
 

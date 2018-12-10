@@ -1,7 +1,73 @@
 /**
+ * @param matrix - two dimensional array
+ * [[1 2 3], [1 2 1], [0 1 1]]
+ * @param vector
+ * @return {*}
+ */
+function matrixMultipleVector(matrix, vector) {
+  return matrix.map(row => {
+    return row.reduce((sum, cell, i) => {
+      return sum + cell * (vector[i] || 0);
+    }, 0);
+  });
+}
+
+function matrixMultiplication(a, b) {
+  return a.map((row) => {
+    return row.map((_, i) => {
+      return row.reduce((sum, cell, j) => {
+        return sum + cell * b[j][i];
+      }, 0);
+    });
+  });
+}
+
+/**
+ * Rotation matrix.
+ * @param rad
+ * @return {*[]}
+ */
+function getRotateMatrix(rad) {
+  const cosRad = Math.cos(rad);
+  const sinRad = Math.sin(rad);
+  return [
+    [cosRad, -sinRad, 0],
+    [sinRad, cosRad, 0],
+    [0, 0, 1],
+  ];
+}
+
+/**
+ * Scale matrix.
+ * @param scale
+ * @return {*[]}
+ */
+function getScaleMatrix(scale) {
+  return [
+    [scale, 0, 0],
+    [0, scale, 0],
+    [0, 0, 0],
+  ];
+}
+
+/**
+ * Translation matrix.
+ * @param center
+ * @return {*[]}
+ */
+function getTranslationMatrix(center) {
+  const [x, y] = center;
+  return [
+    [1, 0, x],
+    [0, 1, y],
+    [0, 0, 0],
+  ];
+}
+
+/**
  * Given two points, return midperpandicular func
  * */
-export function getMidperpandicular(point1, point2) {
+function getMidperpandicular(point1, point2) {
   let { x: x1, y: y1 } = point1;
   let { x: x2, y: y2 } = point2;
   if (Array.isArray(point1)) {
@@ -82,7 +148,12 @@ export function getMidperpandicular(point1, point2) {
   };
 }
 
-export function getRadOfVector(vector) {
+/**
+ * Calculate rad, but slower than that with tan(x) blow.
+ * @param vector
+ * @return {number}
+ */
+function getRadOfVectorWithSin(vector) {
   const [x, y] = vector;
   const stringLength = (x ** 2 + y ** 2) ** 0.5;
   const rad = Math.asin(y / stringLength);
@@ -97,3 +168,69 @@ export function getRadOfVector(vector) {
   }
   return 2 * Math.PI + rad;
 }
+
+function getRadOfVector(vector) {
+  const [x, y] = vector;
+  const rad = Math.atan(y / x);
+  if (x >= 0 && y >= 0) {
+    return rad;
+  }
+  if (x <= 0) {
+    return Math.PI + rad;
+  }
+  return 2 * Math.PI + rad;
+}
+
+/**
+ * Return the length of a vector.
+ * @param x
+ * @param y
+ */
+function getVectorLength([x, y]) {
+  return (x ** 2 + y ** 2) ** 0.5;
+}
+
+/**
+ * Using calculated or relative point and radius,
+ * to calculate new center and radius.
+ * @param points
+ * @param center - relative center,
+ * @param radius
+ * @return {{radius: number, center: *}}
+ */
+function getTransformedRadiusAndCenter(points, center, radius) {
+  const [point1, point2] = points;
+  let { x: x1, y: y1 } = point1;
+  let { x: x2, y: y2 } = point2;
+  if (Array.isArray(point1)) {
+    x1 = point1[0];
+    y1 = point1[1];
+  }
+  if (Array.isArray(point2)) {
+    x2 = point2[0];
+    y2 = point2[1];
+  }
+  const vector = [x2 - x1, y2 - y1];
+  const stringLength = getVectorLength(vector);
+
+  let aa = performance.now();
+  const rad = getRadOfVector(vector);
+  const rotate = getRotateMatrix(rad);
+  const scale = getScaleMatrix(stringLength);
+  const translation = getTranslationMatrix(point1);
+
+  const scaledCenter = matrixMultipleVector(scale, center);
+  const rotatedCenter = matrixMultipleVector(rotate, scaledCenter);
+  const translatedCenter = matrixMultipleVector(translation, [rotatedCenter[0], rotatedCenter[1], 1]);
+
+  return {
+    radius: stringLength * radius,
+    center: translatedCenter,
+  };
+}
+
+export {
+  getMidperpandicular,
+  getRadOfVector,
+  getTransformedRadiusAndCenter,
+};
