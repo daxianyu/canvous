@@ -77,11 +77,21 @@ export default class MassMarks extends Scheduler {
    * */
   drawer = (point) => {
     const { x, y, fillColor, radius: pRadius } = point;
+    const { clientHeight, clientWidth } = this.ctx.canvas;
     const lastFillColor = this.ctx.fillStyle;
     this.ctx.beginPath();
     const radius = pRadius || point.radius || this.options.radius;
     if (fillColor) {
       this.ctx.fillStyle = fillColor;
+    }
+    /* Exceed the range, not draw */
+    if (
+      x + radius < 0 ||
+      y + radius < 0 ||
+      x - radius > clientWidth ||
+      y - radius > clientHeight
+    ) {
+      return;
     }
     this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
     this.ctx.fill();
