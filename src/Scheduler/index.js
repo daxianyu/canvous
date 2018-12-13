@@ -1,6 +1,5 @@
 import TwoDArray from '../base/2dArray';
 
-const SPEED_MULTIPLE = 1.2;
 /**
  * For mass data scheduling
  * lifeCycle:
@@ -43,15 +42,10 @@ export default class Scheduler {
     const totalLength = data.length;
     if (cursor >= totalLength) return;
 
-    /* Compare time every time after drawn */
-    const timeLeft = deadLine.timeRemaining();
     let current = cursor;
-    /* Record cost time and drawn points */
-    const start = Date.now();
-    let cost = 0;
     while (current < totalLength) {
       /* If not time left, return */
-      if (cost > timeLeft / SPEED_MULTIPLE) {
+      if (deadLine.timeRemaining() <= 0) {
         break;
       }
       /* Get raw point by method of TwoDArray, then convert it to deliver to drawer */
@@ -70,7 +64,6 @@ export default class Scheduler {
         this.dataHandler(current, point);
       }
       current += 1;
-      cost = Date.now() - start;
     }
     this.cursor = current;
     /* Stop loop when finished */
