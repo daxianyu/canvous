@@ -12,7 +12,7 @@ function defaultCoordinateTransformation(point) {
 }
 
 function kdDistance(a, b) {
-  return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+  return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5;
 }
 
 /**
@@ -77,7 +77,7 @@ export default class MassMarks extends Scheduler {
    * */
   drawer = (point) => {
     const { x, y, fillColor, radius: pRadius } = point;
-    const { clientHeight, clientWidth } = this.ctx.canvas;
+    const { height, width } = this.ctx.canvas;
     const lastFillColor = this.ctx.fillStyle;
     this.ctx.beginPath();
     const radius = pRadius || point.radius || this.options.radius;
@@ -88,8 +88,8 @@ export default class MassMarks extends Scheduler {
     if (
       x + radius < 0 ||
       y + radius < 0 ||
-      x - radius > clientWidth ||
-      y - radius > clientHeight
+      x - radius > width ||
+      y - radius > height
     ) {
       return;
     }
