@@ -35,6 +35,7 @@ export default class MassMarks extends Scheduler {
        *  */
       layer = -1,
       radius = 1,
+      lazy = true,
     } = options;
     invariant(
       Array.isArray(data),
@@ -48,7 +49,7 @@ export default class MassMarks extends Scheduler {
     } else {
       processedData = MassMarks.generateNormalData(data);
     }
-    super({ data: processedData });
+    super({ data: processedData, lazy });
     this.kdTree = kdTree;
 
     /** Canvas context */
@@ -64,6 +65,7 @@ export default class MassMarks extends Scheduler {
       coordinateTransformation,
       useKd,
       layer,
+      lazy,
       radius,
     };
     /**
@@ -126,17 +128,19 @@ export default class MassMarks extends Scheduler {
       data,
       drawer = this.options.drawer,
       layer = this.options.layer,
+      lazy = this.options.lazy,
       useKd = this.options.useKd,
       radius = this.options.radius,
       distance = this.options.distance,
       dimension = this.options.dimension,
       coordinateTransformation = this.options.coordinateTransformation,
     } = options;
-
+    this.lazy = lazy;
     this.options = {
       data: this.options.data,
       drawer,
       layer,
+      lazy,
       useKd,
       radius,
       distance,
