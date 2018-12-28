@@ -77,14 +77,14 @@ export default class MassMarks extends Scheduler {
   /** drawer
    * Draw point in canvas
    * */
-  drawer = (point) => {
+  drawer = (point, ctx) => {
     const { x, y, fillColor, radius: pRadius } = point;
-    const { height, width } = this.ctx.canvas;
-    const lastFillColor = this.ctx.fillStyle;
-    this.ctx.beginPath();
+    const { height, width } = ctx.canvas;
+    const lastFillColor = ctx.fillStyle;
+    ctx.beginPath();
     const radius = pRadius || point.radius || this.options.radius;
     if (fillColor) {
-      this.ctx.fillStyle = fillColor;
+      ctx.fillStyle = fillColor;
     }
     /* Exceed the range, not draw */
     if (
@@ -95,15 +95,15 @@ export default class MassMarks extends Scheduler {
     ) {
       return;
     }
-    this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    this.ctx.fill();
-    this.ctx.closePath();
-    this.ctx.fillStyle = lastFillColor;
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.closePath();
+    ctx.fillStyle = lastFillColor;
   };
 
   dataHandler(index, data) {
     const point = this.options.coordinateTransformation(data);
-    this.options.drawer(point);
+    this.options.drawer(point, this.ctx);
   }
 
   shouldScheduleStop(index) {
