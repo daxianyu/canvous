@@ -1,6 +1,6 @@
-import { MassMarks } from 'canvous';
-import MultiLayer, { Layer } from './MultiLayer';
+import { MassMarks, MultiLayer } from 'canvous';
 
+const Layer = MultiLayer.Layer;
 const container = document.getElementById('app');
 const canvas = document.createElement('canvas');
 
