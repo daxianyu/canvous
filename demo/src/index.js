@@ -1,13 +1,22 @@
 import { MassMarks } from 'canvous';
+import MultiLayer, { Layer } from './MultiLayer';
 
 const container = document.getElementById('app');
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 1000;
-canvas.height = 1000;
 
-container.appendChild(canvas);
+const layerManager = new MultiLayer(container, {
+  height: 1000,
+  width: 1000,
+});
 
+const massMarksLayer = new Layer(canvas, {
+  fitSize: true,
+});
+
+layerManager.addLayer(massMarksLayer);
+
+const radius = 50;
 /**
  * @return {Array}
  */
@@ -35,7 +44,16 @@ const data = generateMarkData();
 
 const massMarks = new MassMarks(ctx, {
   data,
-  radius: 50,
+  radius,
 });
+
+/* Click event demo */
+layerManager.on('click', (point) => {
+  const clickedPoints = massMarks.getNearest(point, radius, 1);
+  if (clickedPoints.length) {
+    const clickedPoint = clickedPoints[0][0];
+    console.log(clickedPoint);
+  }
+}, massMarksLayer);
 
 massMarks.start();
