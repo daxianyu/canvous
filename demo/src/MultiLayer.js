@@ -10,6 +10,7 @@ class MultiLayer {
     container.style.height = `${height}px`;
     container.style.width = `${width}px`;
     this.root.addEventListener('click', this.eventHandler('click'));
+    this.root.addEventListener('mousemove', this.eventHandler('mousemove'));
   }
 
   addLayer(layer) {
@@ -29,6 +30,7 @@ class MultiLayer {
 
   handlers = {
     click: [],
+    mousemove: [],
   };
 
   eventHandler = (eventName) => (event) => {
@@ -51,7 +53,7 @@ class MultiLayer {
       this.handlers[eventName] = eventHandlers;
     }
     eventHandlers.push({
-      handler,
+      handler: handler.bind(this),
       layer: target,
     });
   }
