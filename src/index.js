@@ -1,7 +1,11 @@
+import Arcs from './Arcs';
 import Grid from './Grid';
 import MassMarks from './MassMarks';
-import Arcs from './Arcs';
+import MultiLayer from './MultiLayer';
 
 export {
-  Grid, MassMarks, Arcs,
+  Arcs,
+  Grid,
+  MassMarks,
+  MultiLayer,
 };
