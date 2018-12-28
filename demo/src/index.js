@@ -24,8 +24,6 @@ function generateMarkData() {
       data.push({
         x: gridWidth * colIndex + gridWidth / 2,
         y: gridHeight * rowIndex + gridHeight / 2,
-        row: rowIndex,
-        col: colIndex,
         fillColor: 'black',
       });
     }
