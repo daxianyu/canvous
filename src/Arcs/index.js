@@ -8,14 +8,12 @@ export default class Arcs extends Scheduler {
    * @param {object} options: rate: L/R rate;
    * */
   constructor(ctx, options) {
-    const { data, coordinateTransformation, rate = 0.5 } = options;
-    super({ data: new TwoDArray(data) });
+    const { data, coordinateTransformation, rate = 0.5, lazy = true } = options;
+    super({ data: new TwoDArray(data), lazy });
     this.ctx = ctx;
     this.coordinateTransformation = coordinateTransformation;
     this.rate = rate;
     this.generateRelativeCenterAndRadius(rate);
-    this.time1 = 0;
-    this.count = 0;
   }
 
   generateRelativeCenterAndRadius(rate) {
@@ -74,14 +72,6 @@ export default class Arcs extends Scheduler {
       startAngle = endAngle;
       endAngle = temp;
     }
-    if (this.count > 10000) {
-      console.log(this.time1);
-      this.time1 = 0
-      this.count = 0
-    } else {
-      this.time1 += (performance.now() - this.startTime);
-      this.count += 1;
-    }
     this.ctx.beginPath();
     this.ctx.arc(xc, yc, radius, startAngle, endAngle);
     this.ctx.stroke();
@@ -96,7 +86,6 @@ export default class Arcs extends Scheduler {
     point2 = this.coordinateTransformation(point2);
     points = [point1, point2];
 
-    this.startTime = performance.now();
     const { centers, radius } = this.relativeCenterAndRadius;
     if (Math.random() > 0.5) {
       const {
