@@ -213,7 +213,6 @@ function getTransformedRadiusAndCenter(points, center, radius) {
   const vector = [x2 - x1, y2 - y1];
   const stringLength = getVectorLength(vector);
 
-  let aa = performance.now();
   const rad = getRadOfVector(vector);
   const rotate = getRotateMatrix(rad);
   const scale = getScaleMatrix(stringLength);
