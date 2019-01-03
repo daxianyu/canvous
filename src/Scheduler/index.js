@@ -37,7 +37,7 @@ export default class Scheduler {
     } = this;
     /* Render this point or not. If false, only this point stop, other points wil render. */
     let shouldRender = true;
-    /* Stop render or not. If false, not only this point stop, next points also stop. */
+    /* Stop render or not. If false, next points will stop. */
     let shouldStopDraw = false;
     const totalLength = data.length;
     if (cursor >= totalLength) return;
@@ -60,10 +60,11 @@ export default class Scheduler {
           shouldStopDraw = true;
         }
       }
-      if (shouldRender && !shouldStopDraw) {
+      if (shouldRender) {
         this.dataHandler(current, point);
       }
       current += 1;
+      if (shouldStopDraw) break;
     }
     this.cursor = current;
     /* Stop loop when finished */
