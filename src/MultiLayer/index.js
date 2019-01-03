@@ -76,6 +76,10 @@ class MultiLayer {
     this.root.appendChild(layer.root);
   }
 
+  removeLayer(layer) {
+    this.root.removeChild(layer.root);
+  }
+
   getSize() {
     const { clientHeight: height, clientWidth: width } = this.root;
     return {
