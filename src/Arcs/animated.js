@@ -1,19 +1,36 @@
+import AsyncScheduler from '../Scheduler/Async';
 import { getMidperpandicular, getRadOfVector, getTransformedRadiusAndCenter } from './utils';
-import Scheduler from '../Scheduler';
-import TwoDArray from '../base/2dArray';
 
-export default class Arcs extends Scheduler {
-  /**
-   * @param {object} ctx - canvas context;
-   * @param {object} options: rate: L/R rate;
-   * */
-  constructor(ctx, options) {
-    const { data, coordinateTransformation, rate = 0.5, lazy = true } = options;
-    super({ data: new TwoDArray(data), lazy });
+const { AnimateSpirit } = AsyncScheduler;
+
+const defaultCoordinateTransformation = (point) => point;
+
+class Animated extends AsyncScheduler {
+  constructor(ctx, props) {
+    const {
+      data = [],
+      onAnimate,
+      coordinateTransformation = defaultCoordinateTransformation,
+      rate = 0.5,
+      strokeStyle = 'black',
+      onAnimationEnd,
+    } = props;
+    super({
+      data,
+      onAnimate,
+    });
     this.ctx = ctx;
+    this.options = {
+      rate,
+      strokeStyle,
+    };
     this.coordinateTransformation = coordinateTransformation;
-    this.rate = rate;
     this.generateRelativeCenterAndRadius(rate);
+    this.animation.onAnimationEnd = onAnimationEnd;
+    this.animation.onFrameStart = () => {
+      const { width, height } = ctx.canvas;
+      ctx.clearRect(0, 0, width, height);
+    };
   }
 
   generateRelativeCenterAndRadius(rate) {
@@ -27,59 +44,6 @@ export default class Arcs extends Scheduler {
       centers,
       radius,
     };
-  }
-
-  /**
-   * This is the only API to modify grid.
-   * New options will be merged with old options, such that one could update grid by calling
-   * this API with differentials.
-   */
-  setOptions = (options) => {
-    const {
-      coordinateTransformation = this.coordinateTransformation,
-      data,
-      rate = this.rate,
-    } = options;
-    if (data && data !== this.data) {
-      this.data = new TwoDArray(data);
-    }
-    this.coordinateTransformation = coordinateTransformation;
-    this.rate = rate;
-    this.generateRelativeCenterAndRadius(rate);
-  };
-
-  /* Implement Schedule dataHandler */
-  dataHandler(index, data) {
-    this.drawArcs(data, this.rate);
-  }
-
-  drawArcAsync(xc, yc, radius, startAngle, endAngle, clockwise) {
-    const tick = (endAngle - startAngle) / 20;
-    let tempEndAngle = startAngle;
-    const drawer = () => {
-      this.animateIndex = window.requestAnimationFrame(() => {
-        this.ctx.beginPath();
-        this.ctx.arc(
-          xc,
-          yc,
-          radius,
-          startAngle,
-          tempEndAngle,
-          clockwise,
-        );
-        this.ctx.stroke();
-        /**
-         * 如果靠得足够近
-         */
-        if (Math.abs(tempEndAngle - endAngle) < 0.5 * Math.abs(tick)) {
-          this.loopStack();
-        } else {
-          tempEndAngle += tick;
-          drawer();
-        }
-      });
-    };
-    drawer();
   }
 
   /**
@@ -116,24 +80,56 @@ export default class Arcs extends Scheduler {
     return endAngle;
   }
 
-  drawArc(center, points, radius) {
+  setOptions = (options) => {
+    const {
+      coordinateTransformation = this.coordinateTransformation,
+      data = this.data,
+      rate = this.options.rate,
+      strokeStyle = this.options.strokeStyle,
+    } = options;
+    this.data = data;
+    this.coordinateTransformation = coordinateTransformation;
+    this.options = {
+      rate,
+      strokeStyle,
+    };
+    this.generateRelativeCenterAndRadius(rate);
+  };
+
+  dataHandler(data, index, next) {
+    this.drawArcs(data, index, next);
+  }
+
+  drawArc(center, points, radius, index, next) {
     const [xc, yc] = center;
     const [point1, point2] = points;
     const [xp1, yp1] = point1;
     const [xp2, yp2] = point2;
     const startAngle = getRadOfVector([xp1 - xc, yp1 - yc]);
-    const endAngle = getRadOfVector([xp2 - xc, yp2 - yc]);
-    this.drawArcAsync(
-      xc,
-      yc,
-      radius,
-      startAngle,
-      Arcs.getDeliveredEndAngle(startAngle, endAngle),
-      Arcs.getArcClockwise(startAngle, endAngle),
+    const endAngle = Animated.getDeliveredEndAngle(
+      startAngle, getRadOfVector([xp2 - xc, yp2 - yc]),
     );
+    this.animation.addSpirit(new AnimateSpirit({
+      from: endAngle,
+      to: startAngle,
+      onRender: (nextPosition, renderIndex) => {
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = this.options.strokeStyle;
+        this.ctx.arc(
+          xc,
+          yc,
+          radius,
+          startAngle,
+          nextPosition,
+          Animated.getArcClockwise(startAngle, endAngle),
+        );
+        this.ctx.stroke();
+      },
+    }));
+    next();
   }
 
-  drawArcs(points) {
+  drawArcs(points, index, next) {
     let [point1, point2] = points;
     /**
      * Transform other unit to x-y;
@@ -142,30 +138,36 @@ export default class Arcs extends Scheduler {
     point2 = this.coordinateTransformation(point2);
     points = [point1, point2];
 
+    /**
+     * Calculate tan(theta), judge the 4th char is odd or even.
+     * @param p1
+     * @param p2
+     * @return {number}
+     */
+    function getRandomWithAngle(p1, p2) {
+      const tan = `${(p1[1] - p2[1]) / (p1[0] - p2[0])}`;
+      return Number(tan[4]) % 2;
+    }
     const { centers, radius } = this.relativeCenterAndRadius;
-    /* 只是作为一种随机, 但是保证该条线始终固定 */
-    if (point1[0] - point2[0] > point1[1] - point2[1]) {
+    /* 只是作为一种随机, 角度!!! */
+    if (getRandomWithAngle(point1, point2)) {
       const {
         center,
         radius: transformedRadius,
       } = getTransformedRadiusAndCenter(points, centers[0], radius);
-      this.drawArc(center, points, transformedRadius);
+      this.drawArc(center, points, transformedRadius, index, next);
     } else {
       const {
         center,
         radius: transformedRadius,
       } = getTransformedRadiusAndCenter(points, centers[1], radius);
-      this.drawArc(center, points, transformedRadius);
+      this.drawArc(center, points, transformedRadius, index, next);
     }
   }
 
-  shouldScheduleStop(current, point) {
-    return true;
-  }
-
-  /* Uniform method */
   render() {
-    window.cancelAnimationFrame(this.animateIndex);
     this.start();
   }
 }
+
+export default Animated;
