@@ -72,6 +72,9 @@ class AnimateSpirit {
   onEnd = () => {}
 }
 
+/**
+ * Manage spirits.
+ */
 class AnimationScheduler {
   /**
    * animatedSpirits: do not need calculate next position
