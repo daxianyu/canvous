@@ -1,8 +1,10 @@
-import { MassMarks, MultiLayer } from 'canvous';
+import { MassMarks, AnimatedArc, MultiLayer } from 'canvous';
+import generateArcs from './generateArcs';
 
 const Layer = MultiLayer.Layer;
 const container = document.getElementById('app');
 const canvas = document.createElement('canvas');
+const arcCanvas = document.createElement('canvas');
 
 const labelText = document.createElement('p');
 labelText.style.fontSize = '44px';
@@ -21,7 +23,12 @@ const massMarksLayer = new Layer(canvas, {
   fitSize: true,
 });
 
+const arcLayer = new Layer(arcCanvas, {
+  fitSize: true,
+});
+
 layerManager.addLayer(massMarksLayer);
+layerManager.addLayer(arcLayer);
 
 const colRowCount = 100;
 const radius = (size / colRowCount) / 2.5;
@@ -39,11 +46,12 @@ function generateMarkData() {
     for (let colIndex = 0; colIndex < colCount; colIndex += 1) {
       const red = Math.ceil(255 - rowIndex * 255 / rowCount).toString(16).padStart(2, '0');
       const green = Math.ceil(255 - colIndex * 255 / colCount).toString(16).padStart(2, '0');
-      data.push({
+      const point = {
         x: gridWidth * colIndex + gridWidth / 2,
         y: gridHeight * rowIndex + gridHeight / 2,
         fillColor: `#${red + green}00`,
-      });
+      };
+      data.push(point);
     }
   }
   return data;
@@ -51,13 +59,36 @@ function generateMarkData() {
 
 const data = generateMarkData();
 
+const arcs = [];
+for (let i = 0; i < 1; i += 1) {
+  arcs.push(generateArcs(size, size));
+}
+
+const arc = new AnimatedArc(arcLayer.ctx, {
+  data: arcs,
+  rate: 0.5,
+  strokeStyle: 'rgba(255, 120, 2, 0.2)',
+  onAnimationEnd: () => {
+    arcLayer.clear();
+    arcs.length = 0;
+    for (let i = 0; i < 1000; i += 1) {
+      arcs.push(generateArcs(size, size));
+    }
+    arc.setOptions({
+      data: arcs,
+    });
+    arc.start();
+  },
+});
+arc.start();
+
 const massMarks = new MassMarks(massMarksLayer.ctx, {
   data,
   radius,
 });
 
 /* Click event demo */
-layerManager.on('click', function (point) {
+layerManager.on('click', (point) => {
   const clickedPoints = massMarks.getNearest(point, radius, 1);
   if (clickedPoints.length) {
     const clickedPoint = clickedPoints[0][0];
