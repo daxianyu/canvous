@@ -59,10 +59,11 @@ class AnimateSpirit {
         this.onRender(nextPosition, this.currentIndex);
         this.currentIndex += 1;
       } else {
+        this.onRender(to);
         this.onEnd();
       }
     } else {
-      this.onRender();
+      this.onRender(to);
     }
   }
 
