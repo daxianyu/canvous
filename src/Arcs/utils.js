@@ -149,36 +149,27 @@ function getMidperpandicular(point1, point2) {
 }
 
 /**
- * Calculate rad, but slower than that with tan(x) blow.
- * @param vector
- * @return {number}
+ * Constrain angle to [0, 2 * PI]
  */
-function getRadOfVectorWithSin(vector) {
-  const [x, y] = vector;
-  const stringLength = (x ** 2 + y ** 2) ** 0.5;
-  const rad = Math.asin(y / stringLength);
-  if (x >= 0 && y >= 0) {
-    return rad;
+function mapAngleToRangeOf2Pi(angle) {
+  while (angle < 0) {
+    angle += 2 * Math.PI;
   }
-  if (x <= 0 && y >= 0) {
-    return Math.PI - rad;
-  }
-  if (x <= 0 && y <= 0) {
-    return Math.PI - rad;
-  }
-  return 2 * Math.PI + rad;
+  return angle % (2 * Math.PI);
 }
 
+/**
+ * return the angle of vector, and lays between [0, 2 * PI]
+ * @param vector
+ * @return {*}
+ */
 function getRadOfVector(vector) {
   const [x, y] = vector;
   const rad = Math.atan(y / x);
-  if (x >= 0 && y >= 0) {
-    return rad;
-  }
   if (x <= 0) {
     return Math.PI + rad;
   }
-  return 2 * Math.PI + rad;
+  return mapAngleToRangeOf2Pi(rad);
 }
 
 /**
