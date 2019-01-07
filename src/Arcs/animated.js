@@ -1,5 +1,10 @@
 import AsyncScheduler from '../Scheduler/Async';
-import { getMidperpandicular, getRadOfVector, getTransformedRadiusAndCenter } from './utils';
+import {
+  getMidperpandicular,
+  getRadOfVector,
+  getTransformedRadiusAndCenter,
+  mapAngleToRangeOf2Pi,
+} from './utils';
 
 const { AnimateSpirit } = AsyncScheduler;
 const defaultCoordinateTransformation = (point) => point;
@@ -29,6 +34,7 @@ class Animated extends AsyncScheduler {
     this.animation.onFrameStart = () => {
       const { width, height } = ctx.canvas;
       ctx.clearRect(0, 0, width, height);
+      this.ctx.strokeStyle = this.options.strokeStyle;
     };
   }
 
@@ -131,8 +137,9 @@ class Animated extends AsyncScheduler {
       startAngle, getRadOfVector([xp2 - xc, yp2 - yc]),
     );
 
+    const averageAngle = mapAngleToRangeOf2Pi((startAngle + endAngle) / 2);
     /* If average degree of Arc is above xAxis, we mark it as upper arc */
-    if ((startAngle + endAngle) / 2 > Math.PI) {
+    if (averageAngle < Math.PI) {
       return;
     }
 
@@ -141,7 +148,6 @@ class Animated extends AsyncScheduler {
       to: endAngle,
       onRender: (nextPosition = endAngle, renderIndex) => {
         this.ctx.beginPath();
-        this.ctx.strokeStyle = this.options.strokeStyle;
         this.ctx.arc(
           xc,
           yc,

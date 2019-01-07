@@ -223,4 +223,5 @@ export {
   getMidperpandicular,
   getRadOfVector,
   getTransformedRadiusAndCenter,
+  mapAngleToRangeOf2Pi,
 };
