@@ -2,7 +2,6 @@ import AsyncScheduler from '../Scheduler/Async';
 import { getMidperpandicular, getRadOfVector, getTransformedRadiusAndCenter } from './utils';
 
 const { AnimateSpirit } = AsyncScheduler;
-
 const defaultCoordinateTransformation = (point) => point;
 
 class Animated extends AsyncScheduler {
@@ -87,20 +86,42 @@ class Animated extends AsyncScheduler {
       rate = this.options.rate,
       strokeStyle = this.options.strokeStyle,
     } = options;
-    this.data = data;
-    this.coordinateTransformation = coordinateTransformation;
-    this.options = {
-      rate,
-      strokeStyle,
-    };
-    this.generateRelativeCenterAndRadius(rate);
+    let shouldReRender = false;
+    if (data !== this.data) {
+      this.data = data;
+      shouldReRender = true;
+    }
+    if (coordinateTransformation !== this.coordinateTransformation) {
+      shouldReRender = true;
+      this.coordinateTransformation = coordinateTransformation;
+    }
+    if (rate !== this.options.rate) {
+      this.options.rate = rate;
+      shouldReRender = true;
+      this.generateRelativeCenterAndRadius(rate);
+    }
+    if (strokeStyle !== this.options.strokeStyle) {
+      shouldReRender = true;
+      this.options.strokeStyle = strokeStyle;
+    }
+    if (shouldReRender) {
+      this.render();
+    }
   };
 
   dataHandler(data, index, next) {
     this.drawArcs(data, index, next);
   }
 
-  drawArc(center, points, radius, index, next) {
+  /**
+   * Only draw the upper part arc of circle.
+   * @param center
+   * @param points
+   * @param radius
+   * @param index
+   * @param next
+   */
+  drawUpperArc(center, points, radius, index, next) {
     const [xc, yc] = center;
     const [point1, point2] = points;
     const [xp1, yp1] = point1;
@@ -109,10 +130,16 @@ class Animated extends AsyncScheduler {
     const endAngle = Animated.getDeliveredEndAngle(
       startAngle, getRadOfVector([xp2 - xc, yp2 - yc]),
     );
+
+    /* If average degree of Arc is above xAxis, we mark it as upper arc */
+    if ((startAngle + endAngle) / 2 > Math.PI) {
+      return;
+    }
+
     this.animation.addSpirit(new AnimateSpirit({
-      from: endAngle,
-      to: startAngle,
-      onRender: (nextPosition, renderIndex) => {
+      from: startAngle,
+      to: endAngle,
+      onRender: (nextPosition = endAngle, renderIndex) => {
         this.ctx.beginPath();
         this.ctx.strokeStyle = this.options.strokeStyle;
         this.ctx.arc(
@@ -138,31 +165,17 @@ class Animated extends AsyncScheduler {
     point2 = this.coordinateTransformation(point2);
     points = [point1, point2];
 
-    /**
-     * Calculate tan(theta), judge the 4th char is odd or even.
-     * @param p1
-     * @param p2
-     * @return {number}
-     */
-    function getRandomWithAngle(p1, p2) {
-      const tan = `${(p1[1] - p2[1]) / (p1[0] - p2[0])}`;
-      return Number(tan[4]) % 2;
-    }
     const { centers, radius } = this.relativeCenterAndRadius;
-    /* 只是作为一种随机, 角度!!! */
-    if (getRandomWithAngle(point1, point2)) {
-      const {
-        center,
-        radius: transformedRadius,
-      } = getTransformedRadiusAndCenter(points, centers[0], radius);
-      this.drawArc(center, points, transformedRadius, index, next);
-    } else {
-      const {
-        center,
-        radius: transformedRadius,
-      } = getTransformedRadiusAndCenter(points, centers[1], radius);
-      this.drawArc(center, points, transformedRadius, index, next);
-    }
+    const {
+      center: center0,
+      radius: transformedRadius0,
+    } = getTransformedRadiusAndCenter(points, centers[0], radius);
+    this.drawUpperArc(center0, points, transformedRadius0, index, next);
+    const {
+      center: center1,
+      radius: transformedRadius1,
+    } = getTransformedRadiusAndCenter(points, centers[1], radius);
+    this.drawUpperArc(center1, points, transformedRadius1, index, next);
   }
 
   render() {
