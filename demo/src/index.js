@@ -61,18 +61,27 @@ const data = generateMarkData();
 
 const arcs = [];
 for (let i = 0; i < 1; i += 1) {
-  arcs.push(generateArcs(size, size));
+  arcs.push({
+    points: generateArcs(size, size),
+  });
 }
 
 const arc = new AnimatedArc(arcLayer.ctx, {
   data: arcs,
   rate: 0.5,
   strokeStyle: 'rgba(255, 120, 2, 0.2)',
+  getPointSet(d) {
+    return d.points;
+  },
   onAnimationEnd: () => {
     arcLayer.clear();
     arcs.length = 0;
     for (let i = 0; i < 1000; i += 1) {
-      arcs.push(generateArcs(size, size));
+      const red = Math.ceil(255 - i * 255 / 1000).toString(16).padStart(2, '0');
+      arcs.push({
+        strokeStyle: `#${red}0022`,
+        points: generateArcs(size, size),
+      });
     }
     arc.setOptions({
       data: arcs,
