@@ -8,6 +8,7 @@ import {
 
 const { AnimateSpirit } = AsyncScheduler;
 const defaultCoordinateTransformation = (point) => point;
+const defaultGetPointSet = (points) => points;
 
 class Animated extends AsyncScheduler {
   constructor(ctx, props) {
@@ -16,6 +17,7 @@ class Animated extends AsyncScheduler {
       onAnimate,
       coordinateTransformation = defaultCoordinateTransformation,
       rate = 0.5,
+      getPointSet = defaultGetPointSet,
       strokeStyle = 'black',
       onAnimationEnd,
     } = props;
@@ -29,6 +31,7 @@ class Animated extends AsyncScheduler {
       strokeStyle,
     };
     this.coordinateTransformation = coordinateTransformation;
+    this.getPointSet = getPointSet;
     this.generateRelativeCenterAndRadius(rate);
     this.animation.onAnimationEnd = onAnimationEnd;
     this.animation.onFrameStart = () => {
@@ -66,7 +69,9 @@ class Animated extends AsyncScheduler {
   }
 
   /**
-   *
+   * Calculate an end angle with distance less then 2Pi to start angle,
+   * because we draw minor arc, two angle should closer than 2Pi,
+   * then set proper clockwise or antiClockwise.
    * @param startAngle
    * @param endAngle
    */
@@ -124,10 +129,11 @@ class Animated extends AsyncScheduler {
    * @param center
    * @param points
    * @param radius
+   * @param data
    * @param index
    * @param next
    */
-  drawUpperArc(center, points, radius, index, next) {
+  drawUpperArc(center, points, radius, data, index, next) {
     const [xc, yc] = center;
     const [point1, point2] = points;
     const [xp1, yp1] = point1;
@@ -146,8 +152,23 @@ class Animated extends AsyncScheduler {
     this.animation.addSpirit(new AnimateSpirit({
       from: startAngle,
       to: endAngle,
+      /**
+       * If data contains style, set it's own style,
+       * but we should save default style first, and reset when this line done.
+       * @param nextPosition
+       * @param renderIndex
+       */
       onRender: (nextPosition = endAngle, renderIndex) => {
         this.ctx.beginPath();
+        const { strokeStyle, lineWidth } = data;
+        const originalStrokeStyle = this.ctx.strokeStyle;
+        const originalLineWidth = this.ctx.lineWidth;
+        if (strokeStyle) {
+          this.ctx.strokeStyle = strokeStyle;
+        }
+        if (lineWidth) {
+          this.ctx.lineWidth = lineWidth;
+        }
         this.ctx.arc(
           xc,
           yc,
@@ -157,31 +178,37 @@ class Animated extends AsyncScheduler {
           Animated.getArcClockwise(startAngle, endAngle),
         );
         this.ctx.stroke();
+        if (strokeStyle) {
+          this.ctx.strokeStyle = originalStrokeStyle;
+        }
+        if (lineWidth) {
+          this.ctx.lineWidth = originalLineWidth;
+        }
       },
     }));
     next();
   }
 
-  drawArcs(points, index, next) {
-    let [point1, point2] = points;
+  drawArcs(data, index, next) {
+    let [point1, point2] = this.getPointSet(data);
     /**
      * Transform other unit to x-y;
      * */
     point1 = this.coordinateTransformation(point1);
     point2 = this.coordinateTransformation(point2);
-    points = [point1, point2];
+    const points = [point1, point2];
 
     const { centers, radius } = this.relativeCenterAndRadius;
     const {
       center: center0,
       radius: transformedRadius0,
     } = getTransformedRadiusAndCenter(points, centers[0], radius);
-    this.drawUpperArc(center0, points, transformedRadius0, index, next);
+    this.drawUpperArc(center0, points, transformedRadius0, data, index, next);
     const {
       center: center1,
       radius: transformedRadius1,
     } = getTransformedRadiusAndCenter(points, centers[1], radius);
-    this.drawUpperArc(center1, points, transformedRadius1, index, next);
+    this.drawUpperArc(center1, points, transformedRadius1, data, index, next);
   }
 
   render() {
