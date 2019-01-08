@@ -20,6 +20,8 @@ class Animated extends AsyncScheduler {
       getPointSet = defaultGetPointSet,
       strokeStyle = 'black',
       onAnimationEnd,
+      onRenderTop,
+      onRenderFront,
     } = props;
     super({
       data,
@@ -32,6 +34,10 @@ class Animated extends AsyncScheduler {
     };
     this.coordinateTransformation = coordinateTransformation;
     this.getPointSet = getPointSet;
+    /* Most top */
+    this.onRenderTop = onRenderTop;
+    /* Most front */
+    this.onRenderFront = onRenderFront;
     this.generateRelativeCenterAndRadius(rate);
     this.animation.onAnimationEnd = onAnimationEnd;
     this.animation.onFrameStart = () => {
@@ -41,10 +47,11 @@ class Animated extends AsyncScheduler {
     };
   }
 
+  /**
+   * Generate initial radius and centers,
+   * any others could calculate by rotation or translation or scale
+   */
   generateRelativeCenterAndRadius(rate) {
-    /** Generate initial radius and centers,
-     * any others could calculate by rotation or translation or scale
-     */
     const radiusAndCenters = getMidperpandicular([0, 0], [1, 0])(rate);
     /* With two points and one radius, we can obtain two circles */
     const { centers, radius } = radiusAndCenters;
@@ -124,6 +131,12 @@ class Animated extends AsyncScheduler {
     this.drawArcs(data, index, next);
   }
 
+  static calculatePosition(x, y, theta, radius) {
+    const dx = radius * Math.cos(theta);
+    const dy = radius * Math.sin(theta);
+    return [x + dx, y + dy];
+  }
+
   /**
    * Only draw the upper part arc of circle.
    * @param center
@@ -178,6 +191,22 @@ class Animated extends AsyncScheduler {
           Animated.getArcClockwise(startAngle, endAngle),
         );
         this.ctx.stroke();
+        /* When animation render ended, renderIndex is undefined */
+        if (renderIndex === undefined && this.onRenderTop) {
+          this.onRenderTop(
+            this.ctx,
+            data,
+            Animated.calculatePosition(xc, yc, averageAngle, radius),
+          );
+        }
+        /* Render at the most front */
+        if (this.onRenderFront) {
+          this.onRenderFront(
+            this.ctx,
+            data,
+            Animated.calculatePosition(xc, yc, nextPosition, radius),
+          );
+        }
         if (strokeStyle) {
           this.ctx.strokeStyle = originalStrokeStyle;
         }
