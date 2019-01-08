@@ -36,9 +36,12 @@ class AnimateSpirit {
   constructor(props) {
     const { curve = 'linear', splitCount = 100, onRender, from, to } = props;
     this.curve = CURVE[curve] || linear;
+    if (typeof curve === 'function') {
+      this.curve = curve;
+    }
     this.currentIndex = 0;
     this.onRender = onRender;
-    if (from && to) {
+    if (from !== undefined && to !== undefined) {
       this.isAnimating = true;
     }
     this.options = {
@@ -53,7 +56,7 @@ class AnimateSpirit {
    */
   render() {
     const { from, to } = this.options;
-    if (from && to) {
+    if (from !== undefined && to !== undefined) {
       if (this.currentIndex <= this.options.splitCount) {
         const nextPosition = this.curve(from, to, this.currentIndex / this.options.splitCount);
         this.onRender(nextPosition, this.currentIndex);

@@ -161,6 +161,26 @@ class Animated extends AsyncScheduler {
     if (averageAngle < Math.PI) {
       return;
     }
+    /* This code is dirty here */
+    if (this.onRenderTop) {
+      this.animation.addSpirit(new AnimateSpirit({
+        from: 0,
+        to: 1,
+        curve(from, to, rate) {
+          if (rate < 0.5) { return from; }
+          return (from - 1) * (1 - rate) + to * rate;
+        },
+        onRender: (nextOpacity = 1, renderIndex) => {
+          this.onRenderTop(
+            this.ctx,
+            data,
+            nextOpacity,
+            Animated.calculatePosition(xc, yc, averageAngle, radius),
+          );
+        },
+      }));
+    }
+    /* This code is dirty here */
 
     this.animation.addSpirit(new AnimateSpirit({
       from: startAngle,
@@ -191,14 +211,6 @@ class Animated extends AsyncScheduler {
           Animated.getArcClockwise(startAngle, endAngle),
         );
         this.ctx.stroke();
-        /* When animation render ended, renderIndex is undefined */
-        if (renderIndex === undefined && this.onRenderTop) {
-          this.onRenderTop(
-            this.ctx,
-            data,
-            Animated.calculatePosition(xc, yc, averageAngle, radius),
-          );
-        }
         /* Render at the most front */
         if (this.onRenderFront) {
           this.onRenderFront(
