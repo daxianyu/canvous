@@ -14,7 +14,6 @@ class Animated extends AsyncScheduler {
   constructor(ctx, props) {
     const {
       data = [],
-      onAnimate,
       coordinateTransformation = defaultCoordinateTransformation,
       rate = 0.5,
       getPointSet = defaultGetPointSet,
@@ -25,7 +24,6 @@ class Animated extends AsyncScheduler {
     } = props;
     super({
       data,
-      onAnimate,
     });
     this.ctx = ctx;
     this.options = {
@@ -253,6 +251,10 @@ class Animated extends AsyncScheduler {
   }
 
   render() {
+    /** When animation start, clear canvas, because some times there is no spirits,
+     * last frame will be remained on canvas */
+    const { width, height } = this.ctx.canvas;
+    this.ctx.clearRect(0, 0, width, height);
     this.start();
   }
 }
