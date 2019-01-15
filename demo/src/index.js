@@ -1,10 +1,12 @@
-import { MassMarks, AnimatedArc, MultiLayer } from 'canvous';
+import { MassMarks, AnimatedArc, MultiLayer, Paths } from 'canvous';
 import generateArcs from './generateArcs';
+import pathGenerator from './generatePath';
 
 const Layer = MultiLayer.Layer;
 const container = document.getElementById('app');
 const canvas = document.createElement('canvas');
 const arcCanvas = document.createElement('canvas');
+const pathCanvas = document.createElement('canvas');
 
 const labelText = document.createElement('p');
 labelText.style.fontSize = '44px';
@@ -27,8 +29,13 @@ const arcLayer = new Layer(arcCanvas, {
   fitSize: true,
 });
 
+const pathLayer = new Layer(pathCanvas, {
+  fitSize: true,
+});
+
 layerManager.addLayer(massMarksLayer);
 layerManager.addLayer(arcLayer);
+layerManager.addLayer(pathLayer);
 
 const colRowCount = 100;
 const radius = (size / colRowCount) / 2.5;
@@ -89,7 +96,7 @@ const arc = new AnimatedArc(arcLayer.ctx, {
     arc.start();
   },
 });
-arc.start();
+// arc.start();
 
 const massMarks = new MassMarks(massMarksLayer.ctx, {
   data,
@@ -118,3 +125,23 @@ layerManager.on('mousemove', function (point) {
 }, massMarksLayer);
 
 massMarks.start();
+
+function generate(count) {
+  const result = [];
+  for (let i = 0; i < count; i += 1) {
+    const red = Math.ceil(255 - i * 255 / count).toString(16).padStart(2, '0');
+    const green = Math.ceil(255 - i * 255 / count).toString(16).padStart(2, '0');
+    result.push({
+      path: pathGenerator(2, size),
+      width: 1,
+      strokeStyle: `#${red + green}00`,
+    });
+  }
+  return result;
+}
+
+const paths = new Paths(pathLayer.ctx, {
+  data: generate(30),
+});
+
+paths.start();
