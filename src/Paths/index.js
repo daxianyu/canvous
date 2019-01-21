@@ -26,6 +26,22 @@ class Paths extends Scheduler {
     this.coordinateTransformation = coordinateTransformation;
   }
 
+  setOptions = (options) => {
+    const {
+      coordinateTransformation = this.coordinateTransformation,
+      getPath = this.getPath,
+      getPathStyle = this.getPathStyle,
+      data,
+    } = options;
+    if (data && data !== this.data) {
+      this.data = new TwoDArray(data);
+    }
+    this.coordinateTransformation = coordinateTransformation;
+    this.getPath = getPath;
+    this.getPathStyle = getPathStyle;
+    this.start();
+  };
+
   dataHandler(index, data) {
     this.drawerLine(
       this.getPath(data).map(this.coordinateTransformation),
